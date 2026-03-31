@@ -829,10 +829,9 @@ export default function HomeTracker() {
         <RecommendationDetailModal item={searchDetailModal} onClose={() => setSearchDetailModal(null)} />
       )}
       <div
-        className="tracker-header-animate"
+        className="tracker-header-animate tracker-page-header"
         style={{
           borderBottom: "1px solid #181818",
-          padding: "28px clamp(20px, 4vw, 40px) 22px",
           background: "rgba(10, 10, 10, 0.92)",
           backdropFilter: "blur(10px)",
           WebkitBackdropFilter: "blur(10px)",
@@ -904,47 +903,41 @@ export default function HomeTracker() {
           </div>
           <div className="tracker-toolbar">
             <div className="tracker-toolbar-inner">
-              <Link href="/watchlist" style={toolbarNavLink}>
-                Watch next
-              </Link>
-              <button type="button" onClick={() => setWtwOpen(true)} style={toolbarNavButton}>
-                What to watch?
-              </button>
-              <Link href="/analytics" style={toolbarNavLink}>
-                Analytics
-              </Link>
-              <Link href="/profile" style={toolbarNavLink}>
-                Profile
-              </Link>
-              {profileCard?.preferences?.showBadgesOnHome !== false && profileCard?.watchSummary?.currentBadge && (
-                <button
-                  type="button"
-                  title="Your watch-time rank — click for details"
-                  onClick={() => setBadgeModalOpen(true)}
-                  style={{
-                    ...toolbarNavLink,
-                    color: "#edd9c8",
-                    border: "1px solid #6b534a",
-                    background: "rgba(120, 72, 56, 0.2)",
-                    maxWidth: 260,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    cursor: "pointer",
-                  }}
-                >
-                  {profileCard.watchSummary.currentBadge.title}
+              <div className="tracker-toolbar-nav-scroll">
+                <Link href="/watchlist" style={toolbarNavLink}>
+                  Watch next
+                </Link>
+                <button type="button" onClick={() => setWtwOpen(true)} style={toolbarNavButton}>
+                  What to watch?
                 </button>
-              )}
-              <span
-                style={{
-                  fontSize: 13,
-                  color: "#8a8580",
-                  fontFamily: FF.sans,
-                  fontWeight: 500,
-                  letterSpacing: "0.02em",
-                  padding: "4px 0",
-                }}
-              >
+                <Link href="/analytics" style={toolbarNavLink}>
+                  Analytics
+                </Link>
+                <Link href="/profile" style={toolbarNavLink}>
+                  Profile
+                </Link>
+                {profileCard?.preferences?.showBadgesOnHome !== false && profileCard?.watchSummary?.currentBadge && (
+                  <button
+                    type="button"
+                    title="Your watch-time rank — click for details"
+                    onClick={() => setBadgeModalOpen(true)}
+                    className="tracker-toolbar-badge-btn"
+                    style={{
+                      ...toolbarNavLink,
+                      color: "#edd9c8",
+                      border: "1px solid #6b534a",
+                      background: "rgba(120, 72, 56, 0.2)",
+                      maxWidth: 260,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {profileCard.watchSummary.currentBadge.title}
+                  </button>
+                )}
+              </div>
+              <span className="tracker-toolbar-saved">
                 Saved to your account
               </span>
               <div

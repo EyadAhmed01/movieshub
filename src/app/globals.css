@@ -66,10 +66,35 @@ body {
   min-width: 0;
 }
 
+/* Nav actions grouped: desktop wraps; mobile becomes one horizontal scroll row */
+.tracker-toolbar-nav-scroll {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-width: min(100%, 200px);
+}
+
+.tracker-toolbar-saved {
+  flex: 0 0 auto;
+  font-size: 13px;
+  color: #8a8580;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 4px 0;
+  white-space: nowrap;
+}
+
 .tracker-search-input {
   min-width: 0;
   flex: 1;
   max-width: min(440px, 100%);
+}
+
+.tracker-page-header {
+  padding: 28px clamp(20px, 4vw, 40px) 22px;
 }
 
 .tracker-tabs {
@@ -240,33 +265,108 @@ body {
     min-width: 0;
   }
 
+  .tracker-page-header {
+    padding: max(14px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 12px
+      max(12px, env(safe-area-inset-left, 0px));
+  }
+
+  .tracker-toolbar {
+    margin-top: 12px;
+  }
+
   .tracker-toolbar-inner {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
+    gap: 10px;
+  }
+
+  .tracker-toolbar-nav-scroll {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: 6px;
+    margin-left: -4px;
+    margin-right: -4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    flex: none;
+    min-width: 0;
+  }
+
+  .tracker-toolbar-nav-scroll::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .tracker-toolbar-nav-scroll::-webkit-scrollbar-thumb {
+    background: #3a3a3a;
+    border-radius: 2px;
+  }
+
+  .tracker-toolbar-nav-scroll > a,
+  .tracker-toolbar-nav-scroll > button {
+    flex: 0 0 auto;
+    padding: 9px 14px !important;
+    font-size: 13px !important;
+    min-height: 40px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tracker-toolbar-nav-scroll .tracker-toolbar-badge-btn {
+    max-width: min(200px, 70vw) !important;
+  }
+
+  .tracker-toolbar-saved {
+    font-size: 11px !important;
+    padding: 0 2px !important;
+    color: #6f6a64 !important;
+    white-space: normal;
+    line-height: 1.35;
   }
 
   .tracker-search-input {
-    max-width: none;
-    width: 100%;
+    max-width: none !important;
+    width: 100% !important;
+    flex: none !important;
   }
 
   .tracker-tabs {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    gap: 2px;
+    margin-top: 12px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .tracker-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .tracker-tab {
-    width: 100%;
-    text-align: left;
-    border-bottom: 1px solid #141414 !important;
-    border-left: 3px solid transparent !important;
-    padding: 12px 14px !important;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    width: auto !important;
+    text-align: center;
+    border-bottom: 2px solid transparent !important;
+    border-left: none !important;
+    padding: 10px 14px !important;
     margin-bottom: 0 !important;
   }
 
   .tracker-tab--active {
-    border-left-color: #e50914 !important;
+    border-bottom-color: #e50914 !important;
+    border-left-color: transparent !important;
   }
 }
 
