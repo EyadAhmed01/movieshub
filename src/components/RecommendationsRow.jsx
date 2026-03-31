@@ -10,10 +10,19 @@ function posterSrc(posterPath) {
   return `${TMDB_IMG}${posterPath}`;
 }
 
+function tmdbPageUrl(mediaType, tmdbId) {
+  if (!tmdbId) return null;
+  return mediaType === "tv"
+    ? `https://www.themoviedb.org/tv/${tmdbId}`
+    : `https://www.themoviedb.org/movie/${tmdbId}`;
+}
+
 export default function RecommendationsRow() {
   const [items, setItems] = useState([]);
   const [reason, setReason] = useState("");
+  const [algorithm, setAlgorithm] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showHow, setShowHow] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -24,6 +33,7 @@ export default function RecommendationsRow() {
         if (cancelled) return;
         setItems(Array.isArray(data.items) ? data.items : []);
         setReason(data.reason || "");
+        setAlgorithm(data.algorithm || null);
       } catch {
         if (!cancelled) setItems([]);
       } finally {
@@ -58,12 +68,53 @@ export default function RecommendationsRow() {
 
   return (
     <section style={{ margin: "0 0 28px", padding: "18px 0", borderBottom: "1px solid #141414" }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
         <h2 style={{ fontFamily: FF.mono, fontSize: 10, letterSpacing: "0.2em", color: "#e50914", margin: 0 }}>
           FOR YOU
         </h2>
         <span style={{ fontSize: 10, color: "#444", fontFamily: FF.mono }}>From your ratings · TMDB</span>
       </div>
+      {algorithm && (
+        <div style={{ marginBottom: 14 }}>
+          <button
+            type="button"
+            onClick={() => setShowHow((v) => !v)}
+            style={{
+              background: "none",
+              border: "1px solid #2a2a2a",
+              borderRadius: 6,
+              color: "#777",
+              fontSize: 10,
+              fontFamily: FF.mono,
+              letterSpacing: "0.1em",
+              padding: "6px 12px",
+              cursor: "pointer",
+            }}
+          >
+            {showHow ? "Hide how this works" : "How are these picked?"}
+          </button>
+          {showHow && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: "14px 16px",
+                background: "#111",
+                border: "1px solid #222",
+                borderRadius: 10,
+                maxWidth: 640,
+              }}
+            >
+              <p style={{ margin: "0 0 10px", fontSize: 12, color: "#9a948a", lineHeight: 1.55 }}>{algorithm.summary}</p>
+              <p style={{ margin: "0 0 10px", fontSize: 11, color: "#666", lineHeight: 1.5 }}>{algorithm.mlNote}</p>
+              <ol style={{ margin: 0, paddingLeft: 18, fontSize: 11, color: "#7a756c", lineHeight: 1.6 }}>
+                {(algorithm.steps || []).map((s, i) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </div>
+      )}
       <div
         style={{
           display: "flex",
@@ -74,39 +125,94 @@ export default function RecommendationsRow() {
           WebkitOverflowScrolling: "touch",
         }}
       >
-        {items.map((x) => (
-          <article
-            key={`${x.mediaType}-${x.tmdbId}`}
-            style={{
-              flex: "0 0 auto",
-              width: 120,
-              background: "#111",
-              border: "1px solid #1f1f1f",
-              borderRadius: 10,
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ aspectRatio: "2/3", background: "#0a0a0a" }}>
-              {x.posterPath ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={posterSrc(x.posterPath)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              ) : (
-                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#333", fontSize: 11 }}>
-                  No poster
-                </div>
-              )}
-            </div>
-            <div style={{ padding: "8px 10px 10px" }}>
-              <p style={{ margin: 0, fontSize: 12, color: "#d0ccc4", lineHeight: 1.35, fontWeight: 500, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                {x.title}
-              </p>
-              <p style={{ margin: "6px 0 0", fontSize: 9, fontFamily: FF.mono, color: "#555", letterSpacing: "0.08em" }}>
-                {x.mediaType === "tv" ? "SERIES" : "MOVIE"}
-                {x.year != null ? ` · ${x.year}` : ""}
-              </p>
-            </div>
-          </article>
-        ))}
+        {items.map((x) => {
+          const href = tmdbPageUrl(x.mediaType, x.tmdbId);
+          const inner = (
+            <>
+              <div style={{ aspectRatio: "2/3", background: "#0a0a0a" }}>
+                {x.posterPath ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={posterSrc(x.posterPath)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#333",
+                      fontSize: 11,
+                    }}
+                  >
+                    No poster
+                  </div>
+                )}
+              </div>
+              <div style={{ padding: "8px 10px 10px" }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: "#d0ccc4",
+                    lineHeight: 1.35,
+                    fontWeight: 500,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
+                  {x.title}
+                </p>
+                <p style={{ margin: "6px 0 0", fontSize: 9, fontFamily: FF.mono, color: "#555", letterSpacing: "0.08em" }}>
+                  {x.mediaType === "tv" ? "SERIES" : "MOVIE"}
+                  {x.year != null ? ` · ${x.year}` : ""}
+                </p>
+              </div>
+            </>
+          );
+          if (!href) {
+            return (
+              <article
+                key={`${x.mediaType}-${x.tmdbId}`}
+                style={{
+                  flex: "0 0 auto",
+                  width: 120,
+                  background: "#111",
+                  border: "1px solid #1f1f1f",
+                  borderRadius: 10,
+                  overflow: "hidden",
+                }}
+              >
+                {inner}
+              </article>
+            );
+          }
+          return (
+            <a
+              key={`${x.mediaType}-${x.tmdbId}`}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open on The Movie Database"
+              style={{
+                flex: "0 0 auto",
+                width: 120,
+                background: "#111",
+                border: "1px solid #1f1f1f",
+                borderRadius: 10,
+                overflow: "hidden",
+                textDecoration: "none",
+                color: "inherit",
+                transition: "border-color 0.15s ease, transform 0.15s ease",
+              }}
+              className="rec-card-link"
+            >
+              {inner}
+            </a>
+          );
+        })}
       </div>
     </section>
   );

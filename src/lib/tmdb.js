@@ -11,11 +11,20 @@ export function tmdbConfigured() {
   return Boolean(key());
 }
 
-function mapCast(castArr, limit = 12) {
-  return (castArr || [])
-    .slice(0, limit)
-    .filter((c) => c?.name)
-    .map((c) => ({ name: c.name, id: typeof c.id === "number" ? c.id : null }));
+/** How many top-billed roles we keep (TMDB `order` = billing importance, lower first). */
+export const TOP_BILLED_CAST_LIMIT = 3;
+
+function mapCast(castArr, limit = TOP_BILLED_CAST_LIMIT) {
+  const rows = (castArr || []).filter((c) => c?.name);
+  const sorted = [...rows].sort((a, b) => {
+    const oa = typeof a.order === "number" ? a.order : 9999;
+    const ob = typeof b.order === "number" ? b.order : 9999;
+    return oa - ob;
+  });
+  return sorted.slice(0, limit).map((c) => ({
+    name: c.name,
+    id: typeof c.id === "number" ? c.id : null,
+  }));
 }
 
 function mapGenres(genres) {
@@ -182,4 +191,41 @@ export async function fetchTvSimilarAndRecommended(tmdbId) {
 export function posterUrl(posterPath) {
   if (!posterPath) return null;
   return `${IMG}${posterPath}`;
+}
+
+/** Best-effort TMDB movie id from title + release year (fills gaps when user never linked TMDB). */
+export async function searchMovieBestMatchId(title, year) {
+  const apiKey = key();
+  const q = String(title || "").trim();
+  if (!apiKey || !q) return null;
+  const y = Number.isFinite(Number(year)) ? `&year=${Number(year)}` : "";
+  const url = `${BASE}/search/movie?api_key=${apiKey}&query=${encodeURIComponent(q)}${y}&page=1`;
+  const res = await fetch(url, { next: { revalidate: 3600 } });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const r = (data.results || [])[0];
+  return typeof r?.id === "number" ? r.id : null;
+}
+
+/** Best-effort TV id from show title (first air year optional). */
+export async function searchTvBestMatchId(title, firstAirYear) {
+  const apiKey = key();
+  const q = String(title || "").trim();
+  if (!apiKey || !q) return null;
+  const url = `${BASE}/search/tv?api_key=${apiKey}&query=${encodeURIComponent(q)}&page=1`;
+  const res = await fetch(url, { next: { revalidate: 3600 } });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const results = data.results || [];
+  if (!results.length) return null;
+  if (Number.isFinite(Number(firstAirYear))) {
+    const y = Number(firstAirYear);
+    const match = results.find((x) => {
+      const d = x.first_air_date;
+      if (!d) return false;
+      return new Date(d).getFullYear() === y;
+    });
+    if (match?.id) return match.id;
+  }
+  return typeof results[0]?.id === "number" ? results[0].id : null;
 }

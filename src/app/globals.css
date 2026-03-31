@@ -373,9 +373,10 @@ body {
   animation: tracker-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+/* Rows: no staggered fade-in (was read as “flashing” on long lists). */
 .tracker-row-animate {
-  opacity: 0;
-  animation: tracker-slide-in-right 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 1;
+  animation: none;
 }
 
 .tracker-add-form-animate {
@@ -391,6 +392,11 @@ body {
     color 0.2s ease,
     border-color 0.2s ease,
     background 0.2s ease;
+}
+
+a.rec-card-link:hover {
+  border-color: #3a3530;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 900px) {

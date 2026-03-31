@@ -37,6 +37,7 @@ export default function AnalyticsPage() {
   const [err, setErr] = useState("");
   const [enriching, setEnriching] = useState(false);
   const [enrichMsg, setEnrichMsg] = useState("");
+  const [inferCast, setInferCast] = useState(false);
 
   const load = useCallback(async () => {
     setErr("");
@@ -57,8 +58,21 @@ export default function AnalyticsPage() {
     setEnriching(true);
     setEnrichMsg("");
     try {
-      const r = await apiJson("/api/library/enrich", { method: "POST" });
-      setEnrichMsg(`Updated ${r.updatedMovies} movies, ${r.updatedSeries} series from TMDB.`);
+      const r = await apiJson("/api/library/enrich", {
+        method: "POST",
+        body: JSON.stringify({ inferCast }),
+      });
+      const parts = [
+        `TMDB refresh: ${r.updatedMovies} movies, ${r.updatedSeries} series.`,
+        r.linkedBySearchMovies || r.linkedBySearchSeries
+          ? `Linked by title search: ${r.linkedBySearchMovies ?? 0} movies, ${r.linkedBySearchSeries ?? 0} series.`
+          : null,
+        r.inferredMovies || r.inferredSeries
+          ? `AI-filled cast (when TMDB had none): ${r.inferredMovies ?? 0} movies, ${r.inferredSeries ?? 0} series.`
+          : null,
+        r.inferCastRequested && r.inferCastSkipped ? "AI cast skipped: configure GROQ_API_KEY or Ollama." : null,
+      ].filter(Boolean);
+      setEnrichMsg(parts.join(" "));
       await load();
     } catch (e) {
       setEnrichMsg(e instanceof Error ? e.message : "Enrich failed");
@@ -122,21 +136,38 @@ export default function AnalyticsPage() {
                 Your viewing stats
               </h1>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <Link
                 href="/"
                 style={{
-                  fontSize: 11,
+                  fontSize: 10,
                   fontFamily: FF.mono,
-                  letterSpacing: "0.1em",
-                  color: "#888",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#8a8a8a",
                   textDecoration: "none",
                   border: "1px solid #333",
-                  padding: "8px 14px",
+                  padding: "8px 12px",
                   borderRadius: 6,
                 }}
               >
                 ← Library
+              </Link>
+              <Link
+                href="/watchlist"
+                style={{
+                  fontSize: 10,
+                  fontFamily: FF.mono,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#8a8a8a",
+                  textDecoration: "none",
+                  border: "1px solid #333",
+                  padding: "8px 12px",
+                  borderRadius: 6,
+                }}
+              >
+                Watch next
               </Link>
               <button
                 type="button"
@@ -156,9 +187,25 @@ export default function AnalyticsPage() {
               </button>
             </div>
           </div>
-          <p style={{ margin: "14px 0 0", fontSize: 12, color: "#555", maxWidth: 560 }}>
-            Minutes and cast need TMDB-linked titles. Use &ldquo;Refresh from TMDB&rdquo; to backfill older rows.
+          <p style={{ margin: "14px 0 0", fontSize: 12, color: "#555", maxWidth: 620, lineHeight: 1.5 }}>
+            Refresh pulls runtime, genres, and cast from TMDB. If a row has no TMDB id, we try to match by title (and year).
+            Optional: use AI to suggest cast only when TMDB still has nothing (can be imperfect — verify on TMDB).
           </p>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginTop: 14,
+              fontSize: 12,
+              color: "#7a756c",
+              cursor: "pointer",
+              userSelect: "none",
+            }}
+          >
+            <input type="checkbox" checked={inferCast} onChange={(e) => setInferCast(e.target.checked)} />
+            Also use AI (Llama) for cast when TMDB has no cast
+          </label>
           <button
             type="button"
             onClick={runEnrich}
@@ -214,7 +261,16 @@ export default function AnalyticsPage() {
                 gap: 20,
               }}
             >
-              <RankedList title="Top actors / actresses" subtitle="By titles in your library (main cast)" empty="Add TMDB-linked titles, then refresh." items={data.topActors} />
+              <RankedList
+                title="Top actors / actresses"
+                subtitle={
+                  data.metaHints.entriesWithInferredCast > 0
+                    ? "Only the top 3 billed leads per title (TMDB order). Some titles used AI for those 3 — approximate."
+                    : "Only the top 3 billed leads per title (TMDB billing order), not the full cast list."
+                }
+                empty="No cast data yet. Click Refresh from TMDB (optionally enable AI for stubborn rows)."
+                items={data.topActors}
+              />
               <RankedList title="Top 5 rated movies" empty="Rate some movies." items={data.topMovies} isMovie />
               <RankedList title="Top 5 rated series" empty="Rate some series." items={data.topSeries} />
             </div>

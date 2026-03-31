@@ -864,7 +864,6 @@ export default function HomeTracker() {
                       margin: "0 -6px",
                       borderRadius: 6,
                       borderBottom: "1px solid #0f0f0f",
-                      animationDelay: `${Math.min(i, 28) * 20}ms`,
                     }}
                   >
                   <div style={{ width: 36 }}>
@@ -999,7 +998,6 @@ export default function HomeTracker() {
                       margin: "0 -6px",
                       borderRadius: 6,
                       borderBottom: "1px solid #0f0f0f",
-                      animationDelay: `${Math.min(i, 28) * 20}ms`,
                     }}
                   >
                   <div style={{ width: 36 }}>
