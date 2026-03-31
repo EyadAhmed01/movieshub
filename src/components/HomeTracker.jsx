@@ -661,6 +661,9 @@ export default function HomeTracker() {
   const [quickAddBusyTmdbId, setQuickAddBusyTmdbId] = useState(null);
   const [profileCard, setProfileCard] = useState(null);
   const [badgeModalOpen, setBadgeModalOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const closeMobileNav = useCallback(() => setMobileNavOpen(false), []);
 
   const showFlash = useCallback((msg) => {
     setFlash(msg);
@@ -687,6 +690,31 @@ export default function HomeTracker() {
       /* keep previous */
     }
   }, []);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const onKey = (e) => e.key === "Escape" && closeMobileNav();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mobileNavOpen, closeMobileNav]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileNavOpen]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const onResize = () => {
+      if (typeof window !== "undefined" && window.innerWidth > 640) closeMobileNav();
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [mobileNavOpen, closeMobileNav]);
 
   useEffect(() => {
     if (status !== "authenticated") {
@@ -829,7 +857,7 @@ export default function HomeTracker() {
         <RecommendationDetailModal item={searchDetailModal} onClose={() => setSearchDetailModal(null)} />
       )}
       <div
-        className="tracker-header-animate tracker-page-header"
+        className={`tracker-header-animate tracker-page-header${mobileNavOpen ? " tracker-page-header--menu-open" : ""}`}
         style={{
           borderBottom: "1px solid #181818",
           background: "rgba(10, 10, 10, 0.92)",
@@ -902,44 +930,107 @@ export default function HomeTracker() {
             </div>
           </div>
           <div className="tracker-toolbar">
-            <div className="tracker-toolbar-inner">
-              <div className="tracker-toolbar-nav-scroll">
-                <Link href="/watchlist" style={toolbarNavLink}>
-                  Watch next
-                </Link>
-                <button type="button" onClick={() => setWtwOpen(true)} style={toolbarNavButton}>
-                  What to watch?
-                </button>
-                <Link href="/analytics" style={toolbarNavLink}>
-                  Analytics
-                </Link>
-                <Link href="/profile" style={toolbarNavLink}>
-                  Profile
-                </Link>
-                {profileCard?.preferences?.showBadgesOnHome !== false && profileCard?.watchSummary?.currentBadge && (
-                  <button
-                    type="button"
-                    title="Your watch-time rank — click for details"
-                    onClick={() => setBadgeModalOpen(true)}
-                    className="tracker-toolbar-badge-btn"
-                    style={{
-                      ...toolbarNavLink,
-                      color: "#edd9c8",
-                      border: "1px solid #6b534a",
-                      background: "rgba(120, 72, 56, 0.2)",
-                      maxWidth: 260,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {profileCard.watchSummary.currentBadge.title}
+            <div className="tracker-toolbar-cluster">
+              <div className="tracker-toolbar-inner tracker-toolbar-inner--desktop">
+                <div className="tracker-toolbar-nav-scroll">
+                  <Link href="/watchlist" style={toolbarNavLink}>
+                    Watch next
+                  </Link>
+                  <button type="button" onClick={() => setWtwOpen(true)} style={toolbarNavButton}>
+                    What to watch?
                   </button>
+                  <Link href="/analytics" style={toolbarNavLink}>
+                    Analytics
+                  </Link>
+                  <Link href="/profile" style={toolbarNavLink}>
+                    Profile
+                  </Link>
+                  {profileCard?.preferences?.showBadgesOnHome !== false && profileCard?.watchSummary?.currentBadge && (
+                    <button
+                      type="button"
+                      title="Your watch-time rank — click for details"
+                      onClick={() => setBadgeModalOpen(true)}
+                      className="tracker-toolbar-badge-btn"
+                      style={{
+                        ...toolbarNavLink,
+                        color: "#edd9c8",
+                        border: "1px solid #6b534a",
+                        background: "rgba(120, 72, 56, 0.2)",
+                        maxWidth: 260,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {profileCard.watchSummary.currentBadge.title}
+                    </button>
+                  )}
+                </div>
+                <span className="tracker-toolbar-saved">Saved to your account</span>
+              </div>
+
+              <div className="tracker-toolbar-inner tracker-toolbar-inner--mobile">
+                <button
+                  type="button"
+                  className="tracker-mobile-menu-trigger"
+                  aria-expanded={mobileNavOpen}
+                  aria-controls="tracker-mobile-nav-panel"
+                  id="tracker-mobile-menu-button"
+                  onClick={() => setMobileNavOpen((o) => !o)}
+                >
+                  <span>Menu</span>
+                  <span className="tracker-mobile-menu-trigger__chev" aria-hidden>
+                    {mobileNavOpen ? "▲" : "▼"}
+                  </span>
+                </button>
+                {mobileNavOpen && (
+                  <>
+                    <div className="tracker-mobile-nav-backdrop" aria-hidden onClick={closeMobileNav} />
+                    <div
+                      id="tracker-mobile-nav-panel"
+                      className="tracker-mobile-nav-panel"
+                      role="menu"
+                      aria-labelledby="tracker-mobile-menu-button"
+                    >
+                      <Link href="/watchlist" className="tracker-mobile-nav-link" onClick={closeMobileNav} role="menuitem">
+                        Watch next
+                      </Link>
+                      <button
+                        type="button"
+                        className="tracker-mobile-nav-link"
+                        role="menuitem"
+                        onClick={() => {
+                          closeMobileNav();
+                          setWtwOpen(true);
+                        }}
+                      >
+                        What to watch?
+                      </button>
+                      <Link href="/analytics" className="tracker-mobile-nav-link" onClick={closeMobileNav} role="menuitem">
+                        Analytics
+                      </Link>
+                      <Link href="/profile" className="tracker-mobile-nav-link" onClick={closeMobileNav} role="menuitem">
+                        Profile
+                      </Link>
+                      {profileCard?.preferences?.showBadgesOnHome !== false && profileCard?.watchSummary?.currentBadge && (
+                        <button
+                          type="button"
+                          className="tracker-mobile-nav-link tracker-mobile-nav-link--badge"
+                          role="menuitem"
+                          onClick={() => {
+                            closeMobileNav();
+                            setBadgeModalOpen(true);
+                          }}
+                        >
+                          Rank: {profileCard.watchSummary.currentBadge.title}
+                        </button>
+                      )}
+                      <p className="tracker-mobile-nav-footnote">Saved to your account</p>
+                    </div>
+                  </>
                 )}
               </div>
-              <span className="tracker-toolbar-saved">
-                Saved to your account
-              </span>
+
               <div
                 className="tracker-search-input"
                 style={{ position: "relative", zIndex: 12, minWidth: 0, flex: 1, maxWidth: 440 }}

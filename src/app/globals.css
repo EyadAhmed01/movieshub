@@ -49,21 +49,31 @@ body {
 }
 
 .tracker-toolbar {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 14px;
   margin-top: 18px;
 }
 
-.tracker-toolbar-inner {
+.tracker-toolbar-cluster {
   display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  width: 100%;
+}
+
+.tracker-toolbar-inner--desktop {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 14px;
-  flex-wrap: wrap;
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+}
+
+.tracker-toolbar-inner--mobile {
+  display: none;
+  width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 /* Nav actions grouped: desktop wraps; mobile becomes one horizontal scroll row */
@@ -95,6 +105,114 @@ body {
 
 .tracker-page-header {
   padding: 28px clamp(20px, 4vw, 40px) 22px;
+}
+
+.tracker-page-header--menu-open {
+  z-index: 50 !important;
+}
+
+.tracker-mobile-menu-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  color: #ece8e0;
+  background: #141414;
+  border: 1px solid #4d4d4d;
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.tracker-mobile-menu-trigger:hover {
+  border-color: #5a5a5a;
+  background: #181818;
+}
+
+.tracker-mobile-menu-trigger__chev {
+  font-size: 10px;
+  color: #8a8580;
+}
+
+.tracker-mobile-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.tracker-mobile-nav-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 45;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+  max-height: min(75vh, 440px);
+  overflow-y: auto;
+}
+
+a.tracker-mobile-nav-link,
+button.tracker-mobile-nav-link {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  padding: 15px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  color: #ece8e0;
+  text-decoration: none;
+  border: none;
+  border-bottom: 1px solid #1f1f1f;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+button.tracker-mobile-nav-link {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+a.tracker-mobile-nav-link:hover,
+button.tracker-mobile-nav-link:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+a.tracker-mobile-nav-link:last-of-type,
+button.tracker-mobile-nav-link:last-of-type {
+  border-bottom: 1px solid #1f1f1f;
+}
+
+.tracker-mobile-nav-link--badge {
+  color: #edd9c8 !important;
+  background: rgba(120, 72, 56, 0.15) !important;
+}
+
+.tracker-mobile-nav-footnote {
+  margin: 0;
+  padding: 12px 18px 14px;
+  font-size: 11px;
+  color: #5a5550;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  line-height: 1.4;
+  border-top: 1px solid #1a1a1a;
+  background: #0c0c0c;
 }
 
 .tracker-tabs {
@@ -274,62 +392,19 @@ body {
     margin-top: 12px;
   }
 
-  .tracker-toolbar-inner {
+  .tracker-toolbar-cluster {
     flex-direction: column;
     align-items: stretch;
-    width: 100%;
     gap: 10px;
   }
 
-  .tracker-toolbar-nav-scroll {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    gap: 8px;
-    width: 100%;
-    max-width: 100%;
-    padding-bottom: 6px;
-    margin-left: -4px;
-    margin-right: -4px;
-    padding-left: 4px;
-    padding-right: 4px;
-    flex: none;
-    min-width: 0;
+  .tracker-toolbar-inner--desktop {
+    display: none !important;
   }
 
-  .tracker-toolbar-nav-scroll::-webkit-scrollbar {
-    height: 4px;
-  }
-
-  .tracker-toolbar-nav-scroll::-webkit-scrollbar-thumb {
-    background: #3a3a3a;
-    border-radius: 2px;
-  }
-
-  .tracker-toolbar-nav-scroll > a,
-  .tracker-toolbar-nav-scroll > button {
-    flex: 0 0 auto;
-    padding: 9px 14px !important;
-    font-size: 13px !important;
-    min-height: 40px;
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .tracker-toolbar-nav-scroll .tracker-toolbar-badge-btn {
-    max-width: min(200px, 70vw) !important;
-  }
-
-  .tracker-toolbar-saved {
-    font-size: 11px !important;
-    padding: 0 2px !important;
-    color: #6f6a64 !important;
-    white-space: normal;
-    line-height: 1.35;
+  .tracker-toolbar-inner--mobile {
+    display: block;
+    z-index: 2;
   }
 
   .tracker-search-input {
