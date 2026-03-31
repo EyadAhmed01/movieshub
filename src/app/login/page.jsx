@@ -10,10 +10,11 @@ function LoginFallback() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: "monospace",
-        color: "#333",
-        fontSize: 12,
-        letterSpacing: "0.2em",
+        fontFamily: "var(--font-mono), ui-monospace, monospace",
+        color: "#444",
+        fontSize: 11,
+        letterSpacing: "0.18em",
+        fontWeight: 500,
       }}
     >
       LOADING…

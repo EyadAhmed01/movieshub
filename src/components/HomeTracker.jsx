@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { FF } from "@/lib/fonts";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w92";
 
@@ -26,7 +27,7 @@ async function apiJson(url, options = {}) {
 function StarRating({ value, onChange }) {
   const [hovered, setHovered] = useState(0);
   return (
-    <div style={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
+    <div style={{ display: "flex", gap: 3, justifyContent: "flex-end", padding: "2px 0" }}>
       {[1, 2, 3, 4, 5].map((star) => (
         <span
           key={star}
@@ -41,11 +42,13 @@ function StarRating({ value, onChange }) {
           title={`${star}/5`}
           style={{
             cursor: "pointer",
-            fontSize: 15,
-            color: star <= (hovered || value) ? "#e50914" : "#222",
-            transition: "color 0.1s",
+            fontSize: 17,
+            color: star <= (hovered || value) ? "#e50914" : "#2a2a2a",
+            transition: "color 0.12s ease",
             userSelect: "none",
             lineHeight: 1,
+            minWidth: 22,
+            textAlign: "center",
           }}
         >
           ★
@@ -57,13 +60,14 @@ function StarRating({ value, onChange }) {
 
 const inputStyle = {
   background: "#0f0f0f",
-  border: "1px solid #252525",
-  color: "#d0ccc4",
-  padding: "9px 12px",
-  fontSize: 12,
-  fontFamily: "monospace",
+  border: "1px solid #2a2a2a",
+  color: "#e8e0d0",
+  padding: "10px 14px",
+  fontSize: 13,
+  fontFamily: FF.sans,
+  fontWeight: 400,
   outline: "none",
-  letterSpacing: "0.04em",
+  letterSpacing: "0.01em",
   width: "100%",
   boxSizing: "border-box",
 };
@@ -116,7 +120,7 @@ function TmdbHints({ query, type, onPick, visible }) {
   if (!visible || q.length < 2 || items.length === 0) {
     if (visible && q.length >= 2 && !configured) {
       return (
-        <p style={{ fontSize: 10, color: "#664", margin: "6px 0 0", fontFamily: "monospace" }}>
+        <p style={{ fontSize: 12, color: "#665", margin: "8px 0 0", fontFamily: FF.sans, lineHeight: 1.4 }}>
           Add TMDB_API_KEY to show search results from The Movie Database.
         </p>
       );
@@ -130,9 +134,10 @@ function TmdbHints({ query, type, onPick, visible }) {
         listStyle: "none",
         margin: "8px 0 0",
         padding: 0,
-        maxHeight: 200,
+        maxHeight: 220,
         overflowY: "auto",
-        border: "1px solid #252525",
+        border: "1px solid #2a2a2a",
+        borderRadius: 8,
         background: "#111",
       }}
     >
@@ -153,8 +158,8 @@ function TmdbHints({ query, type, onPick, visible }) {
               background: "transparent",
               color: "#c8c4ba",
               cursor: "pointer",
-              fontSize: 12,
-              fontFamily: "monospace",
+              fontSize: 13,
+              fontFamily: FF.sans,
             }}
           >
             {r.posterPath && (
@@ -232,20 +237,29 @@ function AddForm({ type, onAdd, onCancel }) {
   };
 
   return (
-    <div style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", padding: "18px 20px", marginBottom: 20 }}>
+    <div
+      style={{
+        background: "#0d0d0d",
+        border: "1px solid #252525",
+        borderRadius: 8,
+        padding: "20px 22px",
+        marginBottom: 24,
+      }}
+    >
       <p
         style={{
           fontSize: 10,
           color: "#e50914",
-          letterSpacing: "0.25em",
+          letterSpacing: "0.2em",
           textTransform: "uppercase",
-          fontFamily: "monospace",
-          margin: "0 0 14px",
+          fontFamily: FF.mono,
+          fontWeight: 500,
+          margin: "0 0 16px",
         }}
       >
         + Add {type === "movie" ? "Movie" : "Series"}
       </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <input
           ref={titleRef}
           placeholder={`${type === "movie" ? "Movie" : "Series"} title (search TMDB)…`}
@@ -259,15 +273,16 @@ function AddForm({ type, onAdd, onCancel }) {
           style={inputStyle}
         />
         <TmdbHints query={title} type={type === "movie" ? "movie" : "tv"} onPick={handlePick} visible={showHints} />
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="tracker-form-row">
           <div style={{ flex: 1 }}>
             <p
               style={{
-                fontSize: 9,
-                color: "#444",
-                letterSpacing: "0.15em",
-                fontFamily: "monospace",
-                margin: "0 0 4px",
+                fontSize: 10,
+                color: "#555",
+                letterSpacing: "0.1em",
+                fontFamily: FF.mono,
+                fontWeight: 500,
+                margin: "0 0 6px",
               }}
             >
               {type === "movie" ? "RELEASE YEAR" : "START YEAR"}
@@ -284,11 +299,12 @@ function AddForm({ type, onAdd, onCancel }) {
             <div style={{ flex: 1 }}>
               <p
                 style={{
-                  fontSize: 9,
-                  color: "#444",
-                  letterSpacing: "0.15em",
-                  fontFamily: "monospace",
-                  margin: "0 0 4px",
+                  fontSize: 10,
+                  color: "#555",
+                  letterSpacing: "0.1em",
+                  fontFamily: FF.mono,
+                  fontWeight: 500,
+                  margin: "0 0 6px",
                 }}
               >
                 END YEAR
@@ -307,11 +323,12 @@ function AddForm({ type, onAdd, onCancel }) {
             <div style={{ flex: 1 }}>
               <p
                 style={{
-                  fontSize: 9,
-                  color: "#444",
-                  letterSpacing: "0.15em",
-                  fontFamily: "monospace",
-                  margin: "0 0 4px",
+                  fontSize: 10,
+                  color: "#555",
+                  letterSpacing: "0.1em",
+                  fontFamily: FF.mono,
+                  fontWeight: 500,
+                  margin: "0 0 6px",
                 }}
               >
                 EPISODES (OPT.)
@@ -328,7 +345,7 @@ function AddForm({ type, onAdd, onCancel }) {
           )}
         </div>
         {error && (
-          <p style={{ fontSize: 11, color: "#e50914", fontFamily: "monospace", margin: 0 }}>{error}</p>
+          <p style={{ fontSize: 13, color: "#e50914", fontFamily: FF.sans, margin: 0 }}>{error}</p>
         )}
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
           <button
@@ -336,12 +353,16 @@ function AddForm({ type, onAdd, onCancel }) {
             onClick={onCancel}
             style={{
               background: "transparent",
-              border: "1px solid #333",
-              color: "#888",
-              padding: "9px 16px",
-              fontSize: 11,
-              fontFamily: "monospace",
+              border: "1px solid #3a3a3a",
+              borderRadius: 6,
+              color: "#9a9a9a",
+              padding: "10px 18px",
+              fontSize: 12,
+              fontFamily: FF.mono,
+              fontWeight: 500,
+              letterSpacing: "0.06em",
               cursor: "pointer",
+              transition: "border-color 0.15s ease, color 0.15s ease",
             }}
           >
             Cancel
@@ -352,13 +373,16 @@ function AddForm({ type, onAdd, onCancel }) {
             style={{
               background: "#e50914",
               border: "none",
+              borderRadius: 6,
               color: "#fff",
-              padding: "9px 20px",
-              fontSize: 11,
-              letterSpacing: "0.15em",
+              padding: "10px 22px",
+              fontSize: 12,
+              letterSpacing: "0.12em",
               textTransform: "uppercase",
               cursor: "pointer",
-              fontFamily: "monospace",
+              fontFamily: FF.mono,
+              fontWeight: 600,
+              transition: "background 0.15s ease, transform 0.1s ease",
             }}
           >
             Add
@@ -372,10 +396,11 @@ function AddForm({ type, onAdd, onCancel }) {
 const colLabel = (label, right) => (
   <span
     style={{
-      fontSize: 9,
-      color: "#333",
-      letterSpacing: "0.2em",
-      fontFamily: "monospace",
+      fontSize: 10,
+      color: "#4a4a4a",
+      letterSpacing: "0.12em",
+      fontFamily: FF.mono,
+      fontWeight: 500,
       textAlign: right ? "right" : "left",
     }}
   >
@@ -489,53 +514,72 @@ export default function HomeTracker() {
           justifyContent: "center",
         }}
       >
-        <p style={{ color: "#333", fontFamily: "monospace", fontSize: 12, letterSpacing: "0.2em" }}>LOADING…</p>
+        <p style={{ color: "#444", fontFamily: FF.mono, fontSize: 11, letterSpacing: "0.18em", fontWeight: 500 }}>
+          LOADING…
+        </p>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a", fontFamily: "'Georgia', serif", color: "#e8e0d0" }}>
+    <div style={{ minHeight: "100vh", background: "#0a0a0a", fontFamily: FF.sans, color: "#e8e0d0" }}>
       <div
         style={{
           borderBottom: "1px solid #181818",
-          padding: "32px 40px 24px",
-          background: "#0a0a0a",
+          padding: "28px clamp(20px, 4vw, 40px) 22px",
+          background: "rgba(10, 10, 10, 0.92)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
           position: "sticky",
           top: 0,
           zIndex: 10,
+          boxShadow: "0 12px 32px rgba(0,0,0,0.45)",
         }}
       >
         <div style={{ maxWidth: 1240, margin: "0 auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+          <div className="tracker-header-top">
             <div>
               <p
                 style={{
                   fontSize: 10,
-                  letterSpacing: "0.3em",
+                  letterSpacing: "0.22em",
                   color: "#e50914",
                   textTransform: "uppercase",
-                  marginBottom: 6,
-                  fontFamily: "monospace",
+                  marginBottom: 10,
+                  fontFamily: FF.mono,
+                  fontWeight: 500,
                 }}
               >
                 Netflix Viewing History
               </p>
               <h1
                 style={{
-                  fontSize: "clamp(20px, 3vw, 38px)",
+                  fontFamily: FF.display,
+                  fontSize: "clamp(20px, 5.5vw, 40px)",
                   fontWeight: 400,
-                  letterSpacing: "-0.02em",
+                  letterSpacing: "-0.03em",
                   margin: 0,
-                  lineHeight: 1,
+                  lineHeight: 1.12,
                   color: "#f5f0e8",
                 }}
               >
                 All Titles · Sorted by Year
               </h1>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 11, color: "#555", fontFamily: "monospace" }}>
+            <div className="tracker-user-bar" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  color: "#6a6a6a",
+                  fontFamily: FF.sans,
+                  fontWeight: 500,
+                  maxWidth: 240,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+                title={session?.user?.email}
+              >
                 {session?.user?.email}
               </span>
               <button
@@ -544,40 +588,46 @@ export default function HomeTracker() {
                 style={{
                   background: "none",
                   border: "1px solid #333",
-                  color: "#888",
-                  padding: "6px 12px",
-                  fontSize: 10,
-                  fontFamily: "monospace",
+                  borderRadius: 6,
+                  color: "#9a9a9a",
+                  padding: "8px 14px",
+                  fontSize: 11,
+                  fontFamily: FF.mono,
+                  fontWeight: 500,
                   cursor: "pointer",
-                  letterSpacing: "0.1em",
+                  letterSpacing: "0.08em",
+                  transition: "color 0.15s ease, border-color 0.15s ease, background 0.15s ease",
                 }}
               >
                 Sign out
               </button>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 14, marginTop: 18 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 10, color: "#2a2a2a", fontFamily: "monospace" }}>☁ saved to your account</span>
+          <div className="tracker-toolbar">
+            <div className="tracker-toolbar-inner">
+              <span style={{ fontSize: 10, color: "#3a3a3a", fontFamily: FF.mono, letterSpacing: "0.1em" }}>
+                ☁ saved to your account
+              </span>
               <input
-                placeholder="Search..."
+                className="tracker-search-input"
+                placeholder="Search titles…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                aria-label="Search titles"
                 style={{
                   background: "#111",
-                  border: "1px solid #222",
+                  border: "1px solid #2a2a2a",
                   color: "#e8e0d0",
-                  padding: "8px 12px",
-                  fontSize: 12,
-                  fontFamily: "monospace",
+                  padding: "10px 14px",
+                  fontSize: 13,
+                  fontFamily: FF.sans,
                   outline: "none",
-                  width: 160,
-                  letterSpacing: "0.05em",
+                  letterSpacing: "0.02em",
                 }}
               />
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "flex-end", marginTop: 18, borderBottom: "1px solid #181818" }}>
+          <div className="tracker-tabs">
             {[
               { key: "all", label: "All" },
               { key: "movies", label: `Movies (${movies.length})` },
@@ -586,34 +636,28 @@ export default function HomeTracker() {
               <button
                 key={tab.key}
                 type="button"
+                className={`tracker-tab ${filter === tab.key ? "tracker-tab--active" : ""}`}
                 onClick={() => setFilter(tab.key)}
                 style={{
                   background: "none",
                   border: "none",
                   borderBottom: filter === tab.key ? "2px solid #e50914" : "2px solid transparent",
-                  color: filter === tab.key ? "#f5f0e8" : "#444",
-                  padding: "6px 16px",
-                  fontSize: 10,
-                  letterSpacing: "0.18em",
+                  color: filter === tab.key ? "#f5f0e8" : "#555",
+                  padding: "10px 18px",
+                  fontSize: 11,
+                  letterSpacing: "0.14em",
                   textTransform: "uppercase",
                   cursor: "pointer",
-                  fontFamily: "monospace",
-                  transition: "color 0.15s",
+                  fontFamily: FF.mono,
+                  fontWeight: filter === tab.key ? 500 : 400,
+                  transition: "color 0.18s ease, border-color 0.18s ease",
                   marginBottom: -1,
                 }}
               >
                 {tab.label}
               </button>
             ))}
-            <span
-              style={{
-                marginLeft: "auto",
-                fontSize: 10,
-                color: "#333",
-                fontFamily: "monospace",
-                paddingBottom: 7,
-              }}
-            >
+            <span className="tracker-tabs-meta">
               {ratedCount} / {movies.length + series.length} rated
             </span>
           </div>
@@ -622,49 +666,53 @@ export default function HomeTracker() {
 
       {flash && (
         <div
+          className="tracker-toast"
           style={{
             position: "fixed",
             bottom: 28,
             left: "50%",
             transform: "translateX(-50%)",
             background: "#1a1a1a",
-            border: "1px solid #2a2a2a",
+            border: "1px solid #333",
+            borderRadius: 10,
             color: "#c8c4ba",
-            padding: "10px 20px",
-            fontSize: 12,
-            fontFamily: "monospace",
-            letterSpacing: "0.05em",
+            padding: "12px 22px",
+            fontSize: 13,
+            fontFamily: FF.sans,
+            letterSpacing: "0.02em",
             zIndex: 100,
             pointerEvents: "none",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.6)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.55)",
           }}
         >
           ✓ {flash}
         </div>
       )}
 
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px 80px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: filter === "all" ? "1fr 1fr" : "1fr", gap: 0 }}>
+      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 clamp(16px, 4vw, 40px) max(88px, env(safe-area-inset-bottom))" }}>
+        <div className={`tracker-main-grid ${filter === "all" ? "tracker-main-grid--split" : "tracker-main-grid--single"}`}>
           {(filter === "all" || filter === "movies") && (
             <div
+              className={filter === "all" ? "tracker-movies-col--split" : undefined}
               style={{
                 borderRight: filter === "all" ? "1px solid #181818" : "none",
                 paddingRight: filter === "all" ? 32 : 0,
               }}
             >
-              <div style={{ padding: "20px 0 14px", display: "flex", alignItems: "center", gap: 10 }}>
+              <div className="tracker-section-head" style={{ padding: "20px 0 14px" }}>
                 <span
                   style={{
                     fontSize: 10,
-                    letterSpacing: "0.3em",
+                    letterSpacing: "0.22em",
                     color: "#e50914",
                     textTransform: "uppercase",
-                    fontFamily: "monospace",
+                    fontFamily: FF.mono,
+                    fontWeight: 500,
                   }}
                 >
                   ◆ Movies
                 </span>
-                <span style={{ fontSize: 10, color: "#3a3a3a", fontFamily: "monospace" }}>
+                <span style={{ fontSize: 11, color: "#4a4a4a", fontFamily: FF.sans }}>
                   {filteredMovies.length} titles
                 </span>
                 <button
@@ -676,13 +724,16 @@ export default function HomeTracker() {
                   style={{
                     marginLeft: "auto",
                     background: showMovieForm ? "#1a1a1a" : "none",
-                    border: "1px solid #282828",
-                    color: showMovieForm ? "#e50914" : "#555",
-                    padding: "4px 10px",
-                    fontSize: 10,
-                    fontFamily: "monospace",
-                    letterSpacing: "0.1em",
+                    border: "1px solid #333",
+                    borderRadius: 6,
+                    color: showMovieForm ? "#e50914" : "#666",
+                    padding: "6px 14px",
+                    fontSize: 11,
+                    fontFamily: FF.mono,
+                    fontWeight: 500,
+                    letterSpacing: "0.08em",
                     cursor: "pointer",
+                    transition: "color 0.15s ease, border-color 0.15s ease, background 0.15s ease",
                   }}
                 >
                   {showMovieForm ? "✕ Close" : "+ Add Movie"}
@@ -693,37 +744,27 @@ export default function HomeTracker() {
                 <AddForm type="movie" onAdd={addMovie} onCancel={() => setShowMovieForm(false)} />
               )}
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "40px 36px 1fr 50px 92px 44px 28px",
-                  borderBottom: "1px solid #181818",
-                  paddingBottom: 6,
-                  marginBottom: 2,
-                  gap: 4,
-                  alignItems: "end",
-                }}
-              >
-                <span />
-                {colLabel("#")}
-                {colLabel("TITLE")}
-                {colLabel("YEAR", true)}
-                {colLabel("YOU", true)}
-                {colLabel("TMDB", true)}
-                <span />
-              </div>
-              {filteredMovies.map((m, i) => (
-                <div
-                  key={m.id}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "40px 36px 1fr 50px 92px 44px 28px",
-                    padding: "7px 0",
-                    borderBottom: "1px solid #0f0f0f",
-                    alignItems: "center",
-                    gap: 4,
-                  }}
-                >
+              <div className="tracker-table-scroll">
+                <div className="tracker-movie-grid tracker-movie-grid--head">
+                  <span />
+                  {colLabel("#")}
+                  {colLabel("TITLE")}
+                  {colLabel("YEAR", true)}
+                  {colLabel("YOU", true)}
+                  {colLabel("TMDB", true)}
+                  <span />
+                </div>
+                {filteredMovies.map((m, i) => (
+                  <div
+                    key={m.id}
+                    className="tracker-row tracker-movie-grid"
+                    style={{
+                      padding: "9px 6px",
+                      margin: "0 -6px",
+                      borderRadius: 6,
+                      borderBottom: "1px solid #0f0f0f",
+                    }}
+                  >
                   <div style={{ width: 36 }}>
                     {m.posterPath && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -732,24 +773,31 @@ export default function HomeTracker() {
                         alt=""
                         width={32}
                         height={48}
-                        style={{ objectFit: "cover", borderRadius: 2 }}
+                        style={{ objectFit: "cover", borderRadius: 4, boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}
                       />
                     )}
                   </div>
-                  <span style={{ fontSize: 10, color: "#282828", fontFamily: "monospace" }}>
+                  <span style={{ fontSize: 10, color: "#3a3a3a", fontFamily: FF.mono, fontWeight: 500 }}>
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span
                     title={m.overview || m.title}
-                    style={{ fontSize: 13, color: "#c8c4ba", lineHeight: 1.3, paddingRight: 8 }}
+                    style={{
+                      fontSize: 14,
+                      fontFamily: FF.sans,
+                      fontWeight: 400,
+                      color: "#d8d4cc",
+                      lineHeight: 1.45,
+                      paddingRight: 8,
+                    }}
                   >
                     {m.title}
                   </span>
-                  <span style={{ fontSize: 11, color: "#555", fontFamily: "monospace", textAlign: "right" }}>
+                  <span style={{ fontSize: 11, color: "#555", fontFamily: FF.mono, textAlign: "right" }}>
                     {m.year}
                   </span>
                   <StarRating value={m.userRating || 0} onChange={(v) => setMovieRating(m.id, v)} />
-                  <span style={{ fontSize: 10, color: "#444", fontFamily: "monospace", textAlign: "right" }}>
+                  <span style={{ fontSize: 10, color: "#444", fontFamily: FF.mono, textAlign: "right" }}>
                     {m.voteAverage != null ? m.voteAverage.toFixed(1) : "—"}
                   </span>
                   <button
@@ -759,38 +807,45 @@ export default function HomeTracker() {
                     style={{
                       background: "none",
                       border: "none",
-                      color: "#2a2a2a",
+                      borderRadius: 4,
+                      color: "#3a3a3a",
                       cursor: "pointer",
-                      fontSize: 14,
-                      padding: "0 0 0 4px",
+                      fontSize: 20,
                       lineHeight: 1,
+                      padding: "4px 6px",
+                      transition: "color 0.15s ease",
                     }}
                   >
                     ×
                   </button>
                 </div>
-              ))}
-              {filteredMovies.length === 0 && (
-                <p style={{ color: "#333", fontSize: 12, fontFamily: "monospace", padding: "20px 0" }}>No results.</p>
-              )}
+                ))}
+                {filteredMovies.length === 0 && (
+                  <p style={{ color: "#444", fontSize: 13, fontFamily: FF.sans, padding: "24px 0" }}>No results.</p>
+                )}
+              </div>
             </div>
           )}
 
           {(filter === "all" || filter === "series") && (
-            <div style={{ paddingLeft: filter === "all" ? 32 : 0 }}>
-              <div style={{ padding: "20px 0 14px", display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              className={filter === "all" ? "tracker-series-col--stacked" : undefined}
+              style={{ paddingLeft: filter === "all" ? 32 : 0 }}
+            >
+              <div className="tracker-section-head" style={{ padding: "20px 0 14px" }}>
                 <span
                   style={{
                     fontSize: 10,
-                    letterSpacing: "0.3em",
+                    letterSpacing: "0.22em",
                     color: "#e50914",
                     textTransform: "uppercase",
-                    fontFamily: "monospace",
+                    fontFamily: FF.mono,
+                    fontWeight: 500,
                   }}
                 >
                   ◆ Series
                 </span>
-                <span style={{ fontSize: 10, color: "#3a3a3a", fontFamily: "monospace" }}>
+                <span style={{ fontSize: 11, color: "#4a4a4a", fontFamily: FF.sans }}>
                   {filteredSeries.length} titles
                 </span>
                 <button
@@ -802,13 +857,16 @@ export default function HomeTracker() {
                   style={{
                     marginLeft: "auto",
                     background: showSeriesForm ? "#1a1a1a" : "none",
-                    border: "1px solid #282828",
-                    color: showSeriesForm ? "#e50914" : "#555",
-                    padding: "4px 10px",
-                    fontSize: 10,
-                    fontFamily: "monospace",
-                    letterSpacing: "0.1em",
+                    border: "1px solid #333",
+                    borderRadius: 6,
+                    color: showSeriesForm ? "#e50914" : "#666",
+                    padding: "6px 14px",
+                    fontSize: 11,
+                    fontFamily: FF.mono,
+                    fontWeight: 500,
+                    letterSpacing: "0.08em",
                     cursor: "pointer",
+                    transition: "color 0.15s ease, border-color 0.15s ease, background 0.15s ease",
                   }}
                 >
                   {showSeriesForm ? "✕ Close" : "+ Add Series"}
@@ -819,38 +877,28 @@ export default function HomeTracker() {
                 <AddForm type="series" onAdd={addSeries} onCancel={() => setShowSeriesForm(false)} />
               )}
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "40px 36px 1fr 62px 36px 92px 44px 28px",
-                  borderBottom: "1px solid #181818",
-                  paddingBottom: 6,
-                  marginBottom: 2,
-                  gap: 4,
-                  alignItems: "end",
-                }}
-              >
-                <span />
-                {colLabel("#")}
-                {colLabel("TITLE")}
-                {colLabel("YEARS", true)}
-                {colLabel("EP", true)}
-                {colLabel("YOU", true)}
-                {colLabel("TMDB", true)}
-                <span />
-              </div>
-              {filteredSeries.map((s, i) => (
-                <div
-                  key={s.id}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "40px 36px 1fr 62px 36px 92px 44px 28px",
-                    padding: "7px 0",
-                    borderBottom: "1px solid #0f0f0f",
-                    alignItems: "center",
-                    gap: 4,
-                  }}
-                >
+              <div className="tracker-table-scroll">
+                <div className="tracker-series-grid tracker-series-grid--head">
+                  <span />
+                  {colLabel("#")}
+                  {colLabel("TITLE")}
+                  {colLabel("YEARS", true)}
+                  {colLabel("EP", true)}
+                  {colLabel("YOU", true)}
+                  {colLabel("TMDB", true)}
+                  <span />
+                </div>
+                {filteredSeries.map((s, i) => (
+                  <div
+                    key={s.id}
+                    className="tracker-row tracker-series-grid"
+                    style={{
+                      padding: "9px 6px",
+                      margin: "0 -6px",
+                      borderRadius: 6,
+                      borderBottom: "1px solid #0f0f0f",
+                    }}
+                  >
                   <div style={{ width: 36 }}>
                     {s.posterPath && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -859,34 +907,41 @@ export default function HomeTracker() {
                         alt=""
                         width={32}
                         height={48}
-                        style={{ objectFit: "cover", borderRadius: 2 }}
+                        style={{ objectFit: "cover", borderRadius: 4, boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}
                       />
                     )}
                   </div>
-                  <span style={{ fontSize: 10, color: "#282828", fontFamily: "monospace" }}>
+                  <span style={{ fontSize: 10, color: "#3a3a3a", fontFamily: FF.mono, fontWeight: 500 }}>
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span
                     title={s.overview || s.title}
-                    style={{ fontSize: 13, color: "#c8c4ba", lineHeight: 1.3, paddingRight: 8 }}
+                    style={{
+                      fontSize: 14,
+                      fontFamily: FF.sans,
+                      fontWeight: 400,
+                      color: "#d8d4cc",
+                      lineHeight: 1.45,
+                      paddingRight: 8,
+                    }}
                   >
                     {s.title}
                   </span>
-                  <span style={{ fontSize: 11, color: "#555", fontFamily: "monospace", textAlign: "right" }}>
+                  <span style={{ fontSize: 11, color: "#555", fontFamily: FF.mono, textAlign: "right" }}>
                     {s.years}
                   </span>
                   <span
                     style={{
                       fontSize: 11,
                       color: s.eps ? "#777" : "#252525",
-                      fontFamily: "monospace",
+                      fontFamily: FF.mono,
                       textAlign: "right",
                     }}
                   >
                     {s.eps ?? "—"}
                   </span>
                   <StarRating value={s.userRating || 0} onChange={(v) => setSeriesRating(s.id, v)} />
-                  <span style={{ fontSize: 10, color: "#444", fontFamily: "monospace", textAlign: "right" }}>
+                  <span style={{ fontSize: 10, color: "#444", fontFamily: FF.mono, textAlign: "right" }}>
                     {s.voteAverage != null ? s.voteAverage.toFixed(1) : "—"}
                   </span>
                   <button
@@ -896,20 +951,23 @@ export default function HomeTracker() {
                     style={{
                       background: "none",
                       border: "none",
-                      color: "#2a2a2a",
+                      borderRadius: 4,
+                      color: "#3a3a3a",
                       cursor: "pointer",
-                      fontSize: 14,
-                      padding: "0 0 0 4px",
+                      fontSize: 20,
                       lineHeight: 1,
+                      padding: "4px 6px",
+                      transition: "color 0.15s ease",
                     }}
                   >
                     ×
                   </button>
                 </div>
-              ))}
-              {filteredSeries.length === 0 && (
-                <p style={{ color: "#333", fontSize: 12, fontFamily: "monospace", padding: "20px 0" }}>No results.</p>
-              )}
+                ))}
+                {filteredSeries.length === 0 && (
+                  <p style={{ color: "#444", fontSize: 13, fontFamily: FF.sans, padding: "24px 0" }}>No results.</p>
+                )}
+              </div>
             </div>
           )}
         </div>

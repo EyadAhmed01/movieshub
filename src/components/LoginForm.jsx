@@ -4,16 +4,18 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { FF } from "@/lib/fonts";
 
 const field = {
   background: "#0f0f0f",
-  border: "1px solid #252525",
-  color: "#d0ccc4",
-  padding: "10px 14px",
-  fontSize: 13,
-  fontFamily: "monospace",
+  border: "1px solid #2a2a2a",
+  color: "#e8e0d0",
+  padding: "12px 16px",
+  fontSize: 15,
+  fontFamily: FF.sans,
   outline: "none",
   width: "100%",
+  letterSpacing: "0.02em",
 };
 
 export default function LoginForm() {
@@ -42,7 +44,6 @@ export default function LoginForm() {
       return;
     }
     if (res?.ok) {
-      // Full navigation so the session cookie is always sent (fixes stuck loading on Vercel)
       window.location.assign(home);
       return;
     }
@@ -51,36 +52,57 @@ export default function LoginForm() {
 
   return (
     <div
+      className="auth-shell"
       style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         background: "#0a0a0a",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: 24,
-        fontFamily: "Georgia, serif",
+        fontFamily: FF.sans,
       }}
     >
-      <div style={{ width: "100%", maxWidth: 380 }}>
+      <div style={{ width: "100%", maxWidth: 400 }}>
         <p
           style={{
             fontSize: 10,
-            letterSpacing: "0.3em",
+            letterSpacing: "0.22em",
             color: "#e50914",
             textTransform: "uppercase",
-            marginBottom: 8,
-            fontFamily: "monospace",
+            marginBottom: 12,
+            fontFamily: FF.mono,
+            fontWeight: 500,
           }}
         >
           Viewing history
         </p>
-        <h1 style={{ fontSize: 26, fontWeight: 400, color: "#f5f0e8", margin: "0 0 24px" }}>Sign in</h1>
+        <h1
+          style={{
+            fontFamily: FF.display,
+            fontSize: 32,
+            fontWeight: 400,
+            letterSpacing: "-0.02em",
+            lineHeight: 1.15,
+            color: "#f5f0e8",
+            margin: "0 0 28px",
+          }}
+        >
+          Sign in
+        </h1>
         {registered && (
-          <p style={{ color: "#6a8f6a", fontSize: 13, marginBottom: 16, fontFamily: "monospace" }}>
+          <p
+            style={{
+              color: "#6a9a72",
+              fontSize: 14,
+              marginBottom: 20,
+              fontFamily: FF.sans,
+              lineHeight: 1.45,
+            }}
+          >
             Account created. You can sign in now.
           </p>
         )}
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <input
             type="email"
             autoComplete="email"
@@ -100,7 +122,9 @@ export default function LoginForm() {
             required
           />
           {error && (
-            <p style={{ color: "#e50914", fontSize: 12, fontFamily: "monospace", margin: 0 }}>{error}</p>
+            <p style={{ color: "#e50914", fontSize: 14, fontFamily: FF.sans, margin: 0, lineHeight: 1.4 }}>
+              {error}
+            </p>
           )}
           <button
             type="submit"
@@ -108,21 +132,25 @@ export default function LoginForm() {
             style={{
               background: pending ? "#555" : "#e50914",
               border: "none",
+              borderRadius: 6,
               color: "#fff",
-              padding: "12px 20px",
-              fontSize: 11,
-              letterSpacing: "0.15em",
+              padding: "14px 22px",
+              fontSize: 12,
+              letterSpacing: "0.14em",
               textTransform: "uppercase",
               cursor: pending ? "wait" : "pointer",
-              fontFamily: "monospace",
+              fontFamily: FF.mono,
+              fontWeight: 600,
+              marginTop: 4,
+              transition: "background 0.15s ease",
             }}
           >
             {pending ? "…" : "Sign in"}
           </button>
         </form>
-        <p style={{ marginTop: 20, fontSize: 13, color: "#555", fontFamily: "monospace" }}>
+        <p style={{ marginTop: 28, fontSize: 14, color: "#666", fontFamily: FF.sans, lineHeight: 1.5 }}>
           No account?{" "}
-          <Link href="/signup" style={{ color: "#e50914" }}>
+          <Link href="/signup" style={{ color: "#e50914", fontWeight: 500 }}>
             Create one
           </Link>
         </p>
