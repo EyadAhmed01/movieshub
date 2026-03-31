@@ -279,94 +279,6 @@ export default function AnalyticsPage() {
               </p>
             </section>
 
-            <section
-              style={{
-                background: "#111",
-                border: "1px solid #1f1f1f",
-                borderRadius: 12,
-                padding: "22px 24px",
-              }}
-            >
-              <h2 style={{ fontFamily: FF.mono, fontSize: 10, letterSpacing: "0.2em", color: "#e50914", margin: "0 0 6px" }}>
-                TOP WATCHED ACTORS / ACTRESSES
-              </h2>
-              <p style={{ fontSize: 11, color: "#555", margin: "0 0 18px", maxWidth: 720, lineHeight: 1.5 }}>
-                Who shows up most across your library. We only count the top-billed leads per title (same cap as TMDB billing — not the
-                full cast).{" "}
-                {data.metaHints.entriesWithInferredCast > 0
-                  ? "Some rows used AI-filled cast when TMDB had none — treat those names as approximate."
-                  : "Run Refresh from TMDB on titles missing cast to fill this in."}
-              </p>
-              {!data.topActors?.length ? (
-                <p style={{ color: "#444", fontSize: 13, margin: 0 }}>
-                  No cast data yet. Use titles linked to TMDB and click Refresh from TMDB (AI can backfill cast when TMDB is empty).
-                </p>
-              ) : (
-                <ul
-                  style={{
-                    listStyle: "none",
-                    margin: 0,
-                    padding: 0,
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-                    gap: 16,
-                  }}
-                >
-                  {data.topActors.map((row, i) => (
-                    <li
-                      key={row.id != null ? `id:${row.id}` : `name:${row.name}:${i}`}
-                      style={{
-                        background: "#141414",
-                        border: "1px solid #252525",
-                        borderRadius: 10,
-                        padding: "14px 14px 16px",
-                        textAlign: "center",
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
-                        {row.profilePath ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={faceSrc(row.profilePath)}
-                            alt=""
-                            width={72}
-                            height={72}
-                            style={{
-                              objectFit: "cover",
-                              borderRadius: "50%",
-                              border: "1px solid #2a2a2a",
-                            }}
-                          />
-                        ) : (
-                          <span
-                            style={{
-                              width: 72,
-                              height: 72,
-                              borderRadius: "50%",
-                              background: "#1f1f1f",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontFamily: FF.display,
-                              fontSize: 28,
-                              color: "#555",
-                              border: "1px solid #2a2a2a",
-                            }}
-                          >
-                            {row.name?.slice(0, 1)?.toUpperCase() ?? "?"}
-                          </span>
-                        )}
-                      </div>
-                      <p style={{ margin: 0, fontSize: 14, color: "#e8e0d0", fontWeight: 600, lineHeight: 1.3 }}>{row.name}</p>
-                      <p style={{ margin: "8px 0 0", fontSize: 11, color: "#e50914", fontFamily: FF.mono, letterSpacing: "0.06em" }}>
-                        {row.count} in your library
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
             <div
               style={{
                 display: "grid",
@@ -374,6 +286,16 @@ export default function AnalyticsPage() {
                 gap: 20,
               }}
             >
+              <RankedList
+                title="Top actors / actresses"
+                subtitle={
+                  data.metaHints.entriesWithInferredCast > 0
+                    ? "Only the top 3 billed leads per title (TMDB order). Some titles used AI for those 3 — approximate."
+                    : "Only the top 3 billed leads per title (TMDB billing order), not the full cast list."
+                }
+                empty="No cast data yet. Click Refresh from TMDB (optionally enable AI for stubborn rows)."
+                items={data.topActors}
+              />
               <RankedList title="Top 5 rated movies" empty="Rate some movies." items={data.topMovies} isMovie />
               <RankedList title="Top 5 rated series" empty="Rate some series." items={data.topSeries} />
             </div>
