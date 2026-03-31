@@ -4,8 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { buildChatUserContext } from "@/lib/chatUserContext";
 import { llmConfigured, runMovieChat } from "@/lib/llm";
 
-const MAX_LEN = 4000;
-const MAX_USER_TURNS = 12;
+const MAX_LEN = 2000;
+const MAX_USER_TURNS = 8;
 
 export async function POST(request) {
   const session = await getServerSession(authOptions);

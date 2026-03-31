@@ -2,24 +2,32 @@ import { prisma } from "@/lib/db";
 import { computeWatchMinutes } from "@/lib/libraryStats";
 import { getCurrentBadge } from "@/lib/badges";
 
-const MAX_CONTEXT_CHARS = 12_000;
-const MAX_MOVIE_LINES = 450;
-const MAX_SERIES_LINES = 250;
+/** Keeps Groq free-tier TPM reasonable: compact rows + hard caps. */
+const MAX_CONTEXT_CHARS = 4200;
+const MAX_MOVIE_ROWS = 180;
+const MAX_SERIES_ROWS = 100;
 
-function movieLine(m) {
-  const r =
-    m.userRating != null && m.userRating > 0
-      ? `your rating ${m.userRating}/10`
-      : "no rating yet (on your list)";
-  return `- ${m.title} (${m.year}) — ${r}`;
+function escField(s) {
+  return String(s ?? "")
+    .replace(/\r?\n/g, " ")
+    .replace(/\t/g, " ")
+    .trim();
 }
 
-function seriesLine(s) {
+/**
+ * One row per title. Tab-separated: kind, title, yearOrYears, ratingOrEmpty.
+ * M = movie, S = series. Rating is 1–10 or empty = no score yet.
+ */
+function movieRow(m) {
   const r =
-    s.userRating != null && s.userRating > 0
-      ? `your rating ${s.userRating}/10`
-      : "no rating yet (on your list)";
-  return `- ${s.title} (${s.years}) — ${r}`;
+    m.userRating != null && m.userRating > 0 ? String(Math.round(m.userRating)) : "";
+  return `M\t${escField(m.title)}\t${m.year}\t${r}`;
+}
+
+function seriesRow(s) {
+  const r =
+    s.userRating != null && s.userRating > 0 ? String(Math.round(s.userRating)) : "";
+  return `S\t${escField(s.title)}\t${escField(s.years)}\t${r}`;
 }
 
 /**
@@ -61,29 +69,25 @@ export async function buildChatUserContext(userId) {
   const hours = Math.round((totalMinutes / 60) * 10) / 10;
 
   const header = [
-    "USER PROFILE (Rotten Potatoes — authoritative for this user only):",
-    `- Display name: ${user?.name?.trim() || "(not set)"}`,
-    `- Movies in library: ${movies.length}; series in library: ${series.length}`,
-    `- Estimated time from logged runtimes/episodes: ~${hours} hours (${totalMinutes} min) — approximate`,
-    `- Marathon badge: ${badge?.title ?? "none"}`,
+    "LIBRARY_SNAPSHOT (compact; authoritative for this user):",
+    `profile\tname=${escField(user?.name) || "—"}\tmovies=${movies.length}\tseries=${series.length}\test_hours≈${hours}\tbadge=${badge?.title ?? "none"}`,
+    "rows: TAB-separated M|movie or S|series, then title, year_or_years, rating_1_10_or_empty_if_unrated",
     "",
-    "MOVIES:",
   ].join("\n");
 
-  const mTrunc = movies.length > MAX_MOVIE_LINES;
-  const mList = (mTrunc ? movies.slice(0, MAX_MOVIE_LINES) : movies).map(movieLine);
-  const mNote = mTrunc ? `\n… and ${movies.length - MAX_MOVIE_LINES} more movies not listed (length cap).` : "";
+  const mTrunc = movies.length > MAX_MOVIE_ROWS;
+  const mRows = (mTrunc ? movies.slice(0, MAX_MOVIE_ROWS) : movies).map(movieRow);
+  const mNote = mTrunc ? `…+${movies.length - MAX_MOVIE_ROWS} more movies omitted\n` : "";
 
-  const seriesHeader = "\nSERIES:\n";
-  const sTrunc = series.length > MAX_SERIES_LINES;
-  const sList = (sTrunc ? series.slice(0, MAX_SERIES_LINES) : series).map(seriesLine);
-  const sNote = sTrunc ? `\n… and ${series.length - MAX_SERIES_LINES} more series not listed (length cap).` : "";
+  const sTrunc = series.length > MAX_SERIES_ROWS;
+  const sRows = (sTrunc ? series.slice(0, MAX_SERIES_ROWS) : series).map(seriesRow);
+  const sNote = sTrunc ? `…+${series.length - MAX_SERIES_ROWS} more series omitted\n` : "";
 
-  let body = `${header}\n${mList.join("\n")}${mNote}${seriesHeader}${sList.join("\n")}${sNote}`;
+  let body = `${header}${mRows.join("\n")}\n${mNote}${sRows.join("\n")}\n${sNote}`.trimEnd();
 
   if (body.length > MAX_CONTEXT_CHARS) {
-    body = body.slice(0, MAX_CONTEXT_CHARS - 80).trimEnd();
-    body += "\n… (context truncated for length — totals above still apply.)";
+    body = body.slice(0, MAX_CONTEXT_CHARS - 60).trimEnd();
+    body += "\n…truncated";
   }
 
   return body;

@@ -3,6 +3,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { FF } from "@/lib/fonts";
 
+function friendlyChatError(raw) {
+  const s = String(raw || "");
+  if (/rate limit|TPM|tokens per minute/i.test(s)) {
+    return "Groq rate limit (too many tokens per minute). Wait ~10–15 seconds and send again, or upgrade your Groq tier. Tip: shorter chats use fewer tokens.";
+  }
+  return s || "Request failed";
+}
+
 async function apiJson(url, options = {}) {
   const res = await fetch(url, {
     credentials: "include",
@@ -10,7 +18,7 @@ async function apiJson(url, options = {}) {
     ...options,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || res.statusText);
+  if (!res.ok) throw new Error(friendlyChatError(data.error || res.statusText));
   return data;
 }
 
@@ -42,7 +50,7 @@ export default function MovieChat() {
       });
       setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Request failed");
+      setError(e instanceof Error ? friendlyChatError(e.message) : "Request failed");
       setMessages((prev) => prev.slice(0, -1));
       setInput(text);
     } finally {

@@ -19,12 +19,11 @@ You do not have this user’s Rotten Potatoes library in this session. For quest
   }
   return `${MOVIE_BOT_BASE}
 
-The following block is a snapshot from THIS USER’s Rotten Potatoes account. It is the only source of truth for their library, ratings, and tracker stats.
-- Titles under MOVIES or SERIES are in their library.
-- "your rating X/10" is their score. "no rating yet" means no score entered (title is still on their list).
-- If a title does not appear, it is not in this tracker (you may still discuss the work from general knowledge).
-- Watch time and badge are estimates from runtimes/episodes in the data.
-- Do not invent rows, ratings, or private fields beyond this block.
+The following block is a compact snapshot from THIS USER’s Rotten Potatoes account — only source of truth for their library.
+- Rows: M or S, then title, year (movie) or years string (series), then rating 1–10 or empty if unrated (still on list).
+- profile line has counts and approximate watch hours. If you see “omitted” or “truncated”, the row list is partial — do not claim a title is absent; say it’s not in the listed slice and the library may have more (see movie/series counts).
+- If the list is complete (no omission note), a missing title is not in this tracker (general knowledge still OK).
+- Do not invent rows or ratings beyond this block.
 
 --- USER DATA ---
 ${block}
@@ -45,33 +44,56 @@ export async function runMovieChat(messages, options = {}) {
   return runGroqChat(messages, system);
 }
 
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 async function runGroqChat(messages, systemPrompt) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     throw new Error("GROQ_API_KEY is not set (or set LLM_PROVIDER=ollama for local Llama).");
   }
   const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: "system", content: systemPrompt }, ...messages],
-      temperature: 0.55,
-      max_tokens: 1024,
-    }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const msg = data?.error?.message || res.statusText;
-    throw new Error(msg || "Groq request failed");
+  const payload = {
+    model,
+    messages: [{ role: "system", content: systemPrompt }, ...messages],
+    temperature: 0.55,
+    max_tokens: 768,
+  };
+
+  const maxAttempts = 4;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      const text = data?.choices?.[0]?.message?.content;
+      if (!text) throw new Error("Empty model response");
+      return String(text).trim();
+    }
+    const msg = data?.error?.message || res.statusText || "Groq request failed";
+    if (res.status === 429 && attempt < maxAttempts - 1) {
+      const hint = msg.match(/try again in ([\d.]+)\s*s/i);
+      const ra = res.headers.get("retry-after");
+      let waitMs = hint ? Math.ceil(parseFloat(hint[1], 10) * 1000) + 300 : 0;
+      if (!waitMs && ra) {
+        const n = parseInt(ra, 10);
+        if (Number.isFinite(n)) waitMs = n * 1000;
+      }
+      if (!waitMs) waitMs = 1500 * (attempt + 1);
+      waitMs = Math.min(waitMs, 35_000);
+      await sleep(waitMs);
+      continue;
+    }
+    throw new Error(msg);
   }
-  const text = data?.choices?.[0]?.message?.content;
-  if (!text) throw new Error("Empty model response");
-  return String(text).trim();
+  throw new Error("Groq request failed");
 }
 
 async function runOllamaChat(messages, systemPrompt) {
