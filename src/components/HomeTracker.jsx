@@ -196,15 +196,18 @@ function TmdbHints({
 
   return (
     <ul
+      className="tmdb-search-hints"
       style={{
         listStyle: "none",
         padding: 0,
         maxHeight: 320,
         overflowY: "auto",
+        overflowX: "hidden",
         border: "1px solid #2a2a2a",
         borderRadius: 8,
         background: "#111",
         boxShadow: "0 12px 40px rgba(0,0,0,0.55)",
+        colorScheme: "dark",
         ...dropPos,
       }}
     >
@@ -280,7 +283,8 @@ function TmdbHints({
                   gap: 6,
                   flex: "0 0 auto",
                   flexShrink: 0,
-                  maxWidth: 132,
+                  minWidth: "min-content",
+                  maxWidth: "100%",
                   alignSelf: "flex-start",
                   paddingTop: 2,
                 }}

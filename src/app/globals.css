@@ -233,6 +233,26 @@ button.tracker-mobile-nav-link:last-of-type {
   border-bottom: 1px solid #181818;
 }
 
+/* TMDB typeahead: dark scrollbar + avoid default light gutter (esp. PWA / WebKit) */
+.tmdb-search-hints {
+  scrollbar-width: thin;
+  scrollbar-color: #4a4a4a #1a1a1a;
+}
+
+.tmdb-search-hints::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tmdb-search-hints::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 4px;
+}
+
+.tmdb-search-hints::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 4px;
+}
+
 .tracker-root-layout {
   overflow-x: clip;
   max-width: 100%;
