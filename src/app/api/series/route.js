@@ -40,6 +40,9 @@ export async function POST(request) {
   let posterPath = null;
   let overview = null;
   let voteAverage = null;
+  let episodeRuntimeMinutes = null;
+  let genres = null;
+  let cast = null;
 
   if (tmdbId && Number.isFinite(tmdbId)) {
     const meta = await fetchTvByTmdbId(tmdbId);
@@ -50,6 +53,9 @@ export async function POST(request) {
       posterPath = meta.posterPath;
       overview = meta.overview;
       voteAverage = meta.voteAverage;
+      episodeRuntimeMinutes = meta.episodeRuntimeMinutes ?? null;
+      genres = meta.genres?.length ? meta.genres : null;
+      cast = meta.cast?.length ? meta.cast : null;
     }
   }
 
@@ -63,6 +69,9 @@ export async function POST(request) {
       posterPath,
       overview,
       voteAverage,
+      episodeRuntimeMinutes,
+      genres,
+      cast,
     },
   });
 

@@ -8,13 +8,36 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  passwordHash String
-  name         String?
-  createdAt    DateTime      @default(now())
-  movies       MovieEntry[]
-  series       SeriesEntry[]
+  id             String          @id @default(cuid())
+  email          String          @unique
+  passwordHash   String
+  name           String?
+  createdAt      DateTime        @default(now())
+  movies         MovieEntry[]
+  series         SeriesEntry[]
+  watchlistItems WatchlistItem[]
+}
+
+model WatchlistItem {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tmdbId           Int
+  mediaType        String
+  title            String
+  year             Int?
+  yearsLabel       String?
+  posterPath       String?
+  overview         String?
+  voteAverage      Float?
+  runtimeMinutes   Int?
+  episodeRuntimeMinutes Int?
+  genres           Json?
+  cast             Json?
+  createdAt        DateTime @default(now())
+
+  @@unique([userId, tmdbId, mediaType])
+  @@index([userId])
 }
 
 model MovieEntry {
@@ -28,6 +51,9 @@ model MovieEntry {
   overview     String?
   voteAverage  Float?
   userRating   Int?
+  runtimeMinutes Int?
+  genres       Json?
+  cast         Json?
   createdAt    DateTime @default(now())
 
   @@index([userId])
@@ -45,6 +71,9 @@ model SeriesEntry {
   overview     String?
   voteAverage  Float?
   userRating   Int?
+  episodeRuntimeMinutes Int?
+  genres       Json?
+  cast         Json?
   createdAt    DateTime @default(now())
 
   @@index([userId])

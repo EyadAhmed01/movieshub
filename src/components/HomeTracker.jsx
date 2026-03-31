@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { FF } from "@/lib/fonts";
+import MovieChat from "@/components/MovieChat";
+import RecommendationsRow from "@/components/RecommendationsRow";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w92";
 
@@ -568,9 +571,6 @@ export default function HomeTracker() {
   const sortedSeries = [...series].sort((a, b) => parseInt(a.years, 10) - parseInt(b.years, 10));
   const filteredMovies = sortedMovies.filter((m) => m.title.toLowerCase().includes(search.toLowerCase()));
   const filteredSeries = sortedSeries.filter((s) => s.title.toLowerCase().includes(search.toLowerCase()));
-  const ratedCount =
-    movies.filter((m) => m.userRating).length + series.filter((s) => s.userRating).length;
-
   if (status === "loading" || (status === "authenticated" && loading)) {
     return (
       <div
@@ -632,7 +632,7 @@ export default function HomeTracker() {
                   color: "#f5f0e8",
                 }}
               >
-                All Titles · Sorted by Year
+                All Titles
               </h1>
             </div>
             <div className="tracker-user-bar" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
@@ -674,6 +674,40 @@ export default function HomeTracker() {
           </div>
           <div className="tracker-toolbar">
             <div className="tracker-toolbar-inner">
+              <Link
+                href="/watchlist"
+                style={{
+                  fontSize: 10,
+                  fontFamily: FF.mono,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "#e50914",
+                  textDecoration: "none",
+                  border: "1px solid #3a2020",
+                  padding: "8px 12px",
+                  borderRadius: 6,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Watch next
+              </Link>
+              <Link
+                href="/analytics"
+                style={{
+                  fontSize: 10,
+                  fontFamily: FF.mono,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "#8a8a8a",
+                  textDecoration: "none",
+                  border: "1px solid #333",
+                  padding: "8px 12px",
+                  borderRadius: 6,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Analytics
+              </Link>
               <span style={{ fontSize: 10, color: "#3a3a3a", fontFamily: FF.mono, letterSpacing: "0.1em" }}>
                 ☁ saved to your account
               </span>
@@ -726,9 +760,6 @@ export default function HomeTracker() {
                 {tab.label}
               </button>
             ))}
-            <span className="tracker-tabs-meta">
-              {ratedCount} / {movies.length + series.length} rated
-            </span>
           </div>
         </div>
       </div>
@@ -759,6 +790,7 @@ export default function HomeTracker() {
       )}
 
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 clamp(16px, 4vw, 40px) max(88px, env(safe-area-inset-bottom))" }}>
+        <RecommendationsRow />
         <div className={`tracker-main-grid ${filter === "all" ? "tracker-main-grid--split" : "tracker-main-grid--single"}`}>
           {(filter === "all" || filter === "movies") && (
             <div
@@ -1043,6 +1075,7 @@ export default function HomeTracker() {
           )}
         </div>
       </div>
+      <MovieChat />
     </div>
   );
 }

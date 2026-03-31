@@ -11,5 +11,19 @@ export default withAuth({
 });
 
 export const config = {
-  matcher: ["/", "/login", "/signup", "/api/movies/:path*", "/api/series/:path*", "/api/tmdb/:path*"],
+  matcher: [
+    "/",
+    "/analytics",
+    "/login",
+    "/signup",
+    "/api/movies/:path*",
+    "/api/series/:path*",
+    "/api/tmdb/:path*",
+    "/api/analytics",
+    "/api/recommendations",
+    "/api/chat",
+    "/api/library/:path*",
+    "/watchlist",
+    "/api/watchlist/:path*",
+  ],
 };
