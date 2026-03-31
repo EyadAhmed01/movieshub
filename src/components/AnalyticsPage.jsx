@@ -191,6 +191,22 @@ export default function AnalyticsPage() {
               >
                 Watch next
               </Link>
+              <Link
+                href="/profile"
+                style={{
+                  fontSize: 10,
+                  fontFamily: FF.mono,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#8a8a8a",
+                  textDecoration: "none",
+                  border: "1px solid #333",
+                  padding: "8px 12px",
+                  borderRadius: 6,
+                }}
+              >
+                Profile
+              </Link>
               <button
                 type="button"
                 onClick={() => signOut({ callbackUrl: "/login" })}

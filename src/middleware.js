@@ -13,6 +13,7 @@ export default withAuth({
 export const config = {
   matcher: [
     "/",
+    "/profile",
     "/analytics",
     "/what-to-watch",
     "/api/what-to-watch",
@@ -22,6 +23,8 @@ export const config = {
     "/api/series/:path*",
     "/api/tmdb/:path*",
     "/api/analytics",
+    "/api/profile",
+    "/api/profile/:path*",
     "/api/recommendations",
     "/api/chat",
     "/api/library/:path*",

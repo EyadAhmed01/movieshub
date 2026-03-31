@@ -244,3 +244,89 @@ export async function suggestWhatToWatch(choices) {
     description: String(obj.description || "").trim(),
   };
 }
+
+const PROFILE_INSIGHT_SYSTEM = `You are Reel Llama, a witty film and TV buff. The user message is JSON: aggregate stats from ONE person's watch library. Output ONLY one JSON object. No markdown fences, no extra text.
+
+Required keys:
+- "tasteSummary": string, at most 2 short sentences, warm and specific to their patterns.
+- "patternBullets": array of 3-4 short strings (habits you infer: genres, eras, movies vs series balance, ratings if present).
+- "blindSpot": one sentence describing a plausible gap (e.g. pre-1980, non-English, documentary, short films) — grounded in what the stats show or don't show.
+- "stretchGoal": one sentence: a fun weekly "stretch" challenge tied to blindSpot.
+- "entryPick": object with "title" (real famous work), "mediaType" ("movie" or "tv"), "why" (one sentence entry-level pick for that gap).
+- "symbolicMonth": object with "name" (exactly one English calendar month: January…December), "tagline" (one funny PG line comparing their taste to that month), "whyChosen" (2 short sentences: why THAT month fits them for this rotation).
+
+Rules: Use only the stats given; never invent specific titles they watched. If the library is tiny, stay encouraging and generic. All pick titles must be real.`;
+
+function normalizeProfileInsight(obj) {
+  if (!obj || typeof obj !== "object") return null;
+  const patternBullets = Array.isArray(obj.patternBullets)
+    ? obj.patternBullets.map((s) => String(s || "").trim()).filter(Boolean).slice(0, 6)
+    : [];
+  const ep = obj.entryPick && typeof obj.entryPick === "object" ? obj.entryPick : {};
+  const sm = obj.symbolicMonth && typeof obj.symbolicMonth === "object" ? obj.symbolicMonth : {};
+  return {
+    tasteSummary: String(obj.tasteSummary || "").trim(),
+    patternBullets,
+    blindSpot: String(obj.blindSpot || "").trim(),
+    stretchGoal: String(obj.stretchGoal || "").trim(),
+    entryPick: {
+      title: String(ep.title || "").trim(),
+      mediaType: ep.mediaType === "tv" ? "tv" : "movie",
+      why: String(ep.why || "").trim(),
+    },
+    symbolicMonth: {
+      name: String(sm.name || "").trim(),
+      tagline: String(sm.tagline || "").trim(),
+      whyChosen: String(sm.whyChosen || "").trim(),
+    },
+  };
+}
+
+/**
+ * @param {{ stats: Record<string, unknown>, weekKey: string, monthKey: string, displayName?: string | null }} args
+ * @returns {Promise<NonNullable<ReturnType<typeof normalizeProfileInsight>>>}
+ */
+export async function generateProfileInsights({ stats, weekKey, monthKey, displayName }) {
+  const provider = (process.env.LLM_PROVIDER || "groq").toLowerCase();
+  const userPayload = {
+    stats,
+    refreshContext: { weekKey, monthKey },
+    displayName: displayName || null,
+  };
+  const user = `Here is the JSON stats object:\n${JSON.stringify(userPayload, null, 2)}\n\nReturn the required JSON object now.`;
+
+  let raw;
+  if (provider === "ollama") {
+    raw = await runOllamaJsonCompletion(PROFILE_INSIGHT_SYSTEM, user, 0.55);
+  } else {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) throw new Error("GROQ_API_KEY is not set");
+    const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: PROFILE_INSIGHT_SYSTEM },
+          { role: "user", content: user },
+        ],
+        temperature: 0.55,
+        max_tokens: 900,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error?.message || "Groq request failed");
+    raw = String(data?.choices?.[0]?.message?.content || "").trim();
+  }
+
+  const parsed = parseJsonObject(raw);
+  const normalized = normalizeProfileInsight(parsed);
+  if (!normalized || !normalized.tasteSummary) {
+    throw new Error("Model did not return valid profile insight JSON");
+  }
+  return normalized;
+}

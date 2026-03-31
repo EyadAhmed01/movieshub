@@ -629,6 +629,7 @@ export default function HomeTracker() {
   const [flash, setFlash] = useState(null);
   const [wtwOpen, setWtwOpen] = useState(false);
   const [quickAddBusyTmdbId, setQuickAddBusyTmdbId] = useState(null);
+  const [profileCard, setProfileCard] = useState(null);
 
   const showFlash = useCallback((msg) => {
     setFlash(msg);
@@ -639,10 +640,28 @@ export default function HomeTracker() {
     const [m, s] = await Promise.all([apiJson("/api/movies"), apiJson("/api/series")]);
     setMovies(m);
     setSeries(s);
+    try {
+      const p = await apiJson("/api/profile");
+      setProfileCard(p);
+    } catch {
+      setProfileCard(null);
+    }
+  }, []);
+
+  const bumpProfile = useCallback(async () => {
+    try {
+      const p = await apiJson("/api/profile");
+      setProfileCard(p);
+    } catch {
+      /* keep previous */
+    }
   }, []);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (status !== "authenticated") {
+      setProfileCard(null);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -664,8 +683,9 @@ export default function HomeTracker() {
       body: JSON.stringify(item),
     });
     setMovies((prev) => [...prev, created].sort((a, b) => a.year - b.year));
+    bumpProfile();
     return created;
-  }, []);
+  }, [bumpProfile]);
 
   const addMovie = useCallback(
     async (item) => {
@@ -712,16 +732,19 @@ export default function HomeTracker() {
     });
     showFlash(`"${created.title}" added to Series`);
     setShowSeriesForm(false);
+    bumpProfile();
   };
 
   const removeMovie = async (id) => {
     await apiJson(`/api/movies/${id}`, { method: "DELETE" });
     setMovies((prev) => prev.filter((m) => m.id !== id));
+    bumpProfile();
   };
 
   const removeSeries = async (id) => {
     await apiJson(`/api/series/${id}`, { method: "DELETE" });
     setSeries((prev) => prev.filter((s) => s.id !== id));
+    bumpProfile();
   };
 
   const setMovieRating = async (id, v) => {
@@ -902,6 +925,44 @@ export default function HomeTracker() {
               >
                 Analytics
               </Link>
+              <Link
+                href="/profile"
+                style={{
+                  fontSize: 10,
+                  fontFamily: FF.mono,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "#8a8a8a",
+                  textDecoration: "none",
+                  border: "1px solid #333",
+                  padding: "8px 12px",
+                  borderRadius: 6,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Profile
+              </Link>
+              {profileCard?.preferences?.showBadgesOnHome !== false &&
+                profileCard?.watchSummary &&
+                profileCard.watchSummary.badgeTotal > 0 && (
+                  <Link
+                    href="/profile"
+                    title="Watch-time badges"
+                    style={{
+                      fontSize: 10,
+                      fontFamily: FF.mono,
+                      letterSpacing: "0.1em",
+                      color: "#a08070",
+                      textDecoration: "none",
+                      border: "1px solid #3a3028",
+                      padding: "8px 12px",
+                      borderRadius: 6,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {profileCard.watchSummary.unlockedBadgeCount}/{profileCard.watchSummary.badgeTotal} badges
+                  </Link>
+                )}
               <span style={{ fontSize: 10, color: "#3a3a3a", fontFamily: FF.mono, letterSpacing: "0.1em" }}>
                 ☁ saved to your account
               </span>

@@ -12,6 +12,10 @@ model User {
   email          String          @unique
   passwordHash   String
   name           String?
+  /// UI prefs: { showBadgesOnHome, weeklyDigest, chatSpoilerMode, … }
+  preferences    Json?
+  /// Cached AI taste + monthly persona; keys tasteWeekKey, monthKey, taste, month
+  insightsCache  Json?
   createdAt      DateTime        @default(now())
   movies         MovieEntry[]
   series         SeriesEntry[]
