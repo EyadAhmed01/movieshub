@@ -24,35 +24,23 @@ async function apiJson(url, options = {}) {
   return data;
 }
 
-function StarRating({ value, onChange }) {
+function RatingOutOfTen({ value, onChange }) {
   const [hovered, setHovered] = useState(0);
+  const active = hovered || value;
   return (
-    <div style={{ display: "flex", gap: 3, justifyContent: "flex-end", padding: "2px 0" }}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <span
-          key={star}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") onChange(value === star ? 0 : star);
-          }}
-          onClick={() => onChange(value === star ? 0 : star)}
-          onMouseEnter={() => setHovered(star)}
+    <div className="rating-o10" role="group" aria-label="Your rating out of 10">
+      {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+        <button
+          key={n}
+          type="button"
+          className={`rating-o10__btn ${n <= active ? "rating-o10__btn--on" : ""}`}
+          onClick={() => onChange(value === n ? 0 : n)}
+          onMouseEnter={() => setHovered(n)}
           onMouseLeave={() => setHovered(0)}
-          title={`${star}/5`}
-          style={{
-            cursor: "pointer",
-            fontSize: 17,
-            color: star <= (hovered || value) ? "#e50914" : "#2a2a2a",
-            transition: "color 0.12s ease",
-            userSelect: "none",
-            lineHeight: 1,
-            minWidth: 22,
-            textAlign: "center",
-          }}
+          title={`${n}/10 — click again to clear`}
         >
-          ★
-        </span>
+          {n}
+        </button>
       ))}
     </div>
   );
@@ -195,6 +183,7 @@ function AddForm({ type, onAdd, onCancel }) {
   const handlePick = (r) => {
     setTitle(r.title);
     if (type === "movie" && r.year != null) setYear(r.year);
+    if (type === "series" && r.year != null) setYear(r.year);
     setTmdbId(r.tmdbId);
   };
 
@@ -238,6 +227,7 @@ function AddForm({ type, onAdd, onCancel }) {
 
   return (
     <div
+      className="tracker-add-form-animate"
       style={{
         background: "#0d0d0d",
         border: "1px solid #252525",
@@ -273,8 +263,8 @@ function AddForm({ type, onAdd, onCancel }) {
           style={inputStyle}
         />
         <TmdbHints query={title} type={type === "movie" ? "movie" : "tv"} onPick={handlePick} visible={showHints} />
-        <div className="tracker-form-row">
-          <div style={{ flex: 1 }}>
+        {type === "movie" && tmdbId != null ? (
+          <div>
             <p
               style={{
                 fontSize: 10,
@@ -285,17 +275,52 @@ function AddForm({ type, onAdd, onCancel }) {
                 margin: "0 0 6px",
               }}
             >
-              {type === "movie" ? "RELEASE YEAR" : "START YEAR"}
+              RELEASE YEAR
+              <span style={{ color: "#e50914", marginLeft: 8, letterSpacing: "0.06em" }}>· TMDB</span>
             </p>
-            <select value={year} onChange={(e) => setYear(Number(e.target.value))} style={selectStyle}>
-              {YEARS.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
+            <div
+              style={{
+                ...selectStyle,
+                cursor: "default",
+                opacity: 0.92,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              {year}
+            </div>
+            <p style={{ fontSize: 11, color: "#555", fontFamily: FF.sans, margin: "10px 0 0", lineHeight: 1.4 }}>
+              Year comes from The Movie Database. Change the title to pick a different result or add manually without TMDB.
+            </p>
           </div>
-          {type === "series" && (
+        ) : type === "series" && tmdbId != null ? (
+          <div
+            style={{
+              background: "#111",
+              border: "1px solid #2a2a2a",
+              borderRadius: 6,
+              padding: "14px 16px",
+            }}
+          >
+            <p
+              style={{
+                fontSize: 10,
+                color: "#e50914",
+                letterSpacing: "0.12em",
+                fontFamily: FF.mono,
+                fontWeight: 500,
+                margin: "0 0 8px",
+              }}
+            >
+              DATES & EPISODES · TMDB
+            </p>
+            <p style={{ fontSize: 13, color: "#9a9a9a", fontFamily: FF.sans, margin: 0, lineHeight: 1.5 }}>
+              Run years and episode count are set from The Movie Database when you add this series. To set them by hand,
+              clear the title and type a new one without choosing a TMDB match.
+            </p>
+          </div>
+        ) : (
+          <div className="tracker-form-row">
             <div style={{ flex: 1 }}>
               <p
                 style={{
@@ -307,10 +332,9 @@ function AddForm({ type, onAdd, onCancel }) {
                   margin: "0 0 6px",
                 }}
               >
-                END YEAR
+                {type === "movie" ? "RELEASE YEAR" : "START YEAR"}
               </p>
-              <select value={yearEnd} onChange={(e) => setYearEnd(e.target.value)} style={selectStyle}>
-                <option value="present">present</option>
+              <select value={year} onChange={(e) => setYear(Number(e.target.value))} style={selectStyle}>
                 {YEARS.map((y) => (
                   <option key={y} value={y}>
                     {y}
@@ -318,32 +342,56 @@ function AddForm({ type, onAdd, onCancel }) {
                 ))}
               </select>
             </div>
-          )}
-          {type === "series" && (
-            <div style={{ flex: 1 }}>
-              <p
-                style={{
-                  fontSize: 10,
-                  color: "#555",
-                  letterSpacing: "0.1em",
-                  fontFamily: FF.mono,
-                  fontWeight: 500,
-                  margin: "0 0 6px",
-                }}
-              >
-                EPISODES (OPT.)
-              </p>
-              <input
-                type="number"
-                placeholder="—"
-                value={eps}
-                onChange={(e) => setEps(e.target.value)}
-                style={inputStyle}
-                min={1}
-              />
-            </div>
-          )}
-        </div>
+            {type === "series" && (
+              <div style={{ flex: 1 }}>
+                <p
+                  style={{
+                    fontSize: 10,
+                    color: "#555",
+                    letterSpacing: "0.1em",
+                    fontFamily: FF.mono,
+                    fontWeight: 500,
+                    margin: "0 0 6px",
+                  }}
+                >
+                  END YEAR
+                </p>
+                <select value={yearEnd} onChange={(e) => setYearEnd(e.target.value)} style={selectStyle}>
+                  <option value="present">present</option>
+                  {YEARS.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {type === "series" && (
+              <div style={{ flex: 1 }}>
+                <p
+                  style={{
+                    fontSize: 10,
+                    color: "#555",
+                    letterSpacing: "0.1em",
+                    fontFamily: FF.mono,
+                    fontWeight: 500,
+                    margin: "0 0 6px",
+                  }}
+                >
+                  EPISODES (OPT.)
+                </p>
+                <input
+                  type="number"
+                  placeholder="—"
+                  value={eps}
+                  onChange={(e) => setEps(e.target.value)}
+                  style={inputStyle}
+                  min={1}
+                />
+              </div>
+            )}
+          </div>
+        )}
         {error && (
           <p style={{ fontSize: 13, color: "#e50914", fontFamily: FF.sans, margin: 0 }}>{error}</p>
         )}
@@ -405,6 +453,26 @@ const colLabel = (label, right) => (
     }}
   >
     {label}
+  </span>
+);
+
+const colLabelYou = () => (
+  <span
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-end",
+      gap: 2,
+      fontSize: 10,
+      color: "#4a4a4a",
+      letterSpacing: "0.12em",
+      fontFamily: FF.mono,
+      fontWeight: 500,
+      lineHeight: 1.1,
+    }}
+  >
+    <span>YOU</span>
+    <span style={{ fontSize: 8, letterSpacing: "0.1em", color: "#3a3a3a" }}>/10</span>
   </span>
 );
 
@@ -522,8 +590,9 @@ export default function HomeTracker() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a", fontFamily: FF.sans, color: "#e8e0d0" }}>
+    <div className="tracker-page-animate" style={{ minHeight: "100vh", background: "#0a0a0a", fontFamily: FF.sans, color: "#e8e0d0" }}>
       <div
+        className="tracker-header-animate"
         style={{
           borderBottom: "1px solid #181818",
           padding: "28px clamp(20px, 4vw, 40px) 22px",
@@ -666,7 +735,7 @@ export default function HomeTracker() {
 
       {flash && (
         <div
-          className="tracker-toast"
+          className="tracker-toast tracker-toast-animate"
           style={{
             position: "fixed",
             bottom: 28,
@@ -750,19 +819,20 @@ export default function HomeTracker() {
                   {colLabel("#")}
                   {colLabel("TITLE")}
                   {colLabel("YEAR", true)}
-                  {colLabel("YOU", true)}
+                  {colLabelYou()}
                   {colLabel("TMDB", true)}
                   <span />
                 </div>
                 {filteredMovies.map((m, i) => (
                   <div
                     key={m.id}
-                    className="tracker-row tracker-movie-grid"
+                    className="tracker-row tracker-movie-grid tracker-row-animate"
                     style={{
                       padding: "9px 6px",
                       margin: "0 -6px",
                       borderRadius: 6,
                       borderBottom: "1px solid #0f0f0f",
+                      animationDelay: `${Math.min(i, 28) * 20}ms`,
                     }}
                   >
                   <div style={{ width: 36 }}>
@@ -796,7 +866,7 @@ export default function HomeTracker() {
                   <span style={{ fontSize: 11, color: "#555", fontFamily: FF.mono, textAlign: "right" }}>
                     {m.year}
                   </span>
-                  <StarRating value={m.userRating || 0} onChange={(v) => setMovieRating(m.id, v)} />
+                  <RatingOutOfTen value={m.userRating || 0} onChange={(v) => setMovieRating(m.id, v)} />
                   <span style={{ fontSize: 10, color: "#444", fontFamily: FF.mono, textAlign: "right" }}>
                     {m.voteAverage != null ? m.voteAverage.toFixed(1) : "—"}
                   </span>
@@ -884,19 +954,20 @@ export default function HomeTracker() {
                   {colLabel("TITLE")}
                   {colLabel("YEARS", true)}
                   {colLabel("EP", true)}
-                  {colLabel("YOU", true)}
-                  {colLabel("TMDB", true)}
-                  <span />
-                </div>
+                {colLabelYou()}
+                {colLabel("TMDB", true)}
+                <span />
+              </div>
                 {filteredSeries.map((s, i) => (
                   <div
                     key={s.id}
-                    className="tracker-row tracker-series-grid"
+                    className="tracker-row tracker-series-grid tracker-row-animate"
                     style={{
                       padding: "9px 6px",
                       margin: "0 -6px",
                       borderRadius: 6,
                       borderBottom: "1px solid #0f0f0f",
+                      animationDelay: `${Math.min(i, 28) * 20}ms`,
                     }}
                   >
                   <div style={{ width: 36 }}>
@@ -940,7 +1011,7 @@ export default function HomeTracker() {
                   >
                     {s.eps ?? "—"}
                   </span>
-                  <StarRating value={s.userRating || 0} onChange={(v) => setSeriesRating(s.id, v)} />
+                  <RatingOutOfTen value={s.userRating || 0} onChange={(v) => setSeriesRating(s.id, v)} />
                   <span style={{ fontSize: 10, color: "#444", fontFamily: FF.mono, textAlign: "right" }}>
                     {s.voteAverage != null ? s.voteAverage.toFixed(1) : "—"}
                   </span>

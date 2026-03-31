@@ -22,7 +22,7 @@ export async function PATCH(request, { params }) {
     userRating = null;
   } else if (body.userRating !== undefined) {
     const n = Math.round(Number(body.userRating));
-    if (!Number.isFinite(n) || n < 1 || n > 5) {
+    if (!Number.isFinite(n) || n < 1 || n > 10) {
       return NextResponse.json({ error: "Invalid rating" }, { status: 400 });
     }
     userRating = n;
