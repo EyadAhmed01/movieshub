@@ -30,6 +30,15 @@ export function findLibraryMovie(movies, r) {
   return movies.find((m) => m.title.trim().toLowerCase() === t && (y == null || m.year === y)) || null;
 }
 
+export function findLibrarySeries(series, r) {
+  if (!series?.length) return null;
+  const byTmdb = series.find((s) => s.tmdbId != null && Number(s.tmdbId) === Number(r.tmdbId));
+  if (byTmdb) return byTmdb;
+  const t = (r.title || "").trim().toLowerCase();
+  if (!t) return null;
+  return series.find((s) => s.title.trim().toLowerCase() === t) || null;
+}
+
 export default function TmdbHints({
   query,
   type,
@@ -37,6 +46,7 @@ export default function TmdbHints({
   onOpenDetail,
   visible,
   libraryMovies = [],
+  librarySeries = [],
   onQuickAdd,
   quickAddBusyTmdbId = null,
   positionDropdown = "flow",
@@ -68,7 +78,23 @@ export default function TmdbHints({
     };
   }, [q, type, visible]);
 
-  if (!visible || q.length < 2 || items.length === 0) {
+  const isMovie = type === "movie";
+  const showLibraryMovies = isMovie && Array.isArray(libraryMovies);
+  const showLibrarySeries = !isMovie && Array.isArray(librarySeries);
+  const visibleItems = items.filter((r) => {
+    if (showLibraryMovies && findLibraryMovie(libraryMovies, r)) return false;
+    if (showLibrarySeries && findLibrarySeries(librarySeries, r)) return false;
+    return true;
+  });
+
+  if (!visible || q.length < 2 || visibleItems.length === 0) {
+    if (visible && q.length >= 2 && items.length > 0 && visibleItems.length === 0) {
+      return (
+        <p style={{ fontSize: 12, color: "#665", margin: "8px 0 0", fontFamily: FF.sans, lineHeight: 1.4 }}>
+          All matches are already in your library.
+        </p>
+      );
+    }
     if (visible && q.length >= 2 && !configured) {
       return (
         <p style={{ fontSize: 12, color: "#665", margin: "8px 0 0", fontFamily: FF.sans, lineHeight: 1.4 }}>
@@ -79,9 +105,8 @@ export default function TmdbHints({
     return null;
   }
 
-  const isMovie = type === "movie";
-  const showLibrary = isMovie && Array.isArray(libraryMovies);
-  const quickAddEnabled = showLibrary && typeof onQuickAdd === "function";
+  const showLibrary = showLibraryMovies || showLibrarySeries;
+  const quickAddEnabled = showLibraryMovies && typeof onQuickAdd === "function";
 
   const dropPos =
     positionDropdown === "absolute"
@@ -112,8 +137,12 @@ export default function TmdbHints({
         ...dropPos,
       }}
     >
-      {items.map((r) => {
-        const lib = showLibrary ? findLibraryMovie(libraryMovies, r) : null;
+      {visibleItems.map((r) => {
+        const lib = showLibraryMovies
+          ? findLibraryMovie(libraryMovies, r)
+          : showLibrarySeries
+            ? findLibrarySeries(librarySeries, r)
+            : null;
         const busy = quickAddBusyTmdbId != null && quickAddBusyTmdbId === r.tmdbId;
         return (
           <li

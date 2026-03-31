@@ -83,6 +83,7 @@ function AddForm({
   onAdd,
   onCancel,
   libraryMovies = [],
+  librarySeries = [],
   onQuickAddMovie,
   quickAddBusyTmdbId = null,
 }) {
@@ -183,6 +184,7 @@ function AddForm({
           onPick={handlePick}
           visible={showHints}
           libraryMovies={type === "movie" ? libraryMovies : []}
+          librarySeries={type === "series" ? librarySeries : []}
           onQuickAdd={type === "movie" ? onQuickAddMovie : undefined}
           quickAddBusyTmdbId={quickAddBusyTmdbId}
         />
@@ -848,7 +850,12 @@ export default function HomeTracker() {
               </div>
 
               {showSeriesForm && (
-                <AddForm type="series" onAdd={addSeries} onCancel={() => setShowSeriesForm(false)} />
+                <AddForm
+                  type="series"
+                  onAdd={addSeries}
+                  onCancel={() => setShowSeriesForm(false)}
+                  librarySeries={series}
+                />
               )}
 
               <div className="tracker-table-scroll">

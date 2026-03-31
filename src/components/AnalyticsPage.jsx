@@ -67,7 +67,7 @@ export default function AnalyticsPage() {
     try {
       const r = await apiJson("/api/library/enrich", {
         method: "POST",
-        body: JSON.stringify({ inferCast }),
+        body: JSON.stringify({ inferCast, force: true }),
       });
       const parts = [
         `TMDB refresh: ${r.updatedMovies} movies, ${r.updatedSeries} series.`,

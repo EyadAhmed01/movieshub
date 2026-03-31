@@ -1032,6 +1032,38 @@ button.rec-card-link:hover {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.app-top-bar__badge-btn {
+  position: relative;
+  z-index: 2;
+  max-width: min(132px, 30vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #edd9c8;
+  background: rgba(120, 72, 56, 0.38);
+  border: 1px solid rgba(200, 120, 90, 0.4);
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+  flex-shrink: 1;
+  min-width: 0;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.app-top-bar__badge-btn:hover {
+  background: rgba(140, 88, 64, 0.48);
+  border-color: rgba(220, 140, 100, 0.55);
 }
 
 .app-top-bar__logo-link {

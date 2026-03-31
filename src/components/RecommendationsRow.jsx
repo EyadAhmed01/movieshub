@@ -138,7 +138,10 @@ export default function RecommendationsRow({ variant = "inline" }) {
     if (background) setRefreshing(true);
     else setLoading(true);
     try {
-      const res = await fetch("/api/recommendations", { credentials: "include", cache: "no-store" });
+      const res = await fetch(`/api/recommendations?_=${Date.now()}`, {
+        credentials: "include",
+        cache: "no-store",
+      });
       const data = await res.json().catch(() => ({}));
       const m = Array.isArray(data.movieItems) ? data.movieItems : [];
       const t = Array.isArray(data.tvItems) ? data.tvItems : [];
@@ -176,29 +179,30 @@ export default function RecommendationsRow({ variant = "inline" }) {
   const totalPicks = movieItems.length + tvItems.length;
   const hasAny = totalPicks > 0;
 
-  const refreshBtn = isPage ? (
+  const refreshBtn = (
     <button
       type="button"
       onClick={() => loadRecs(true)}
-      disabled={refreshing || loading}
+      disabled={refreshing}
       style={{
         flexShrink: 0,
         background: refreshing ? "#2a2a2a" : "#1a1a1a",
         border: "1px solid #3a3a3a",
         borderRadius: 8,
         color: "#c8c4ba",
-        fontSize: 11,
+        fontSize: isPage ? 11 : 10,
         fontFamily: FF.mono,
         letterSpacing: "0.1em",
         textTransform: "uppercase",
-        padding: "10px 16px",
-        cursor: refreshing || loading ? "wait" : "pointer",
+        padding: isPage ? "10px 16px" : "8px 12px",
+        cursor: refreshing ? "wait" : "pointer",
         transition: "border-color 0.15s ease, background 0.15s ease",
+        alignSelf: "flex-start",
       }}
     >
       {refreshing ? "Updating…" : "Refresh picks"}
     </button>
-  ) : null;
+  );
 
   const headerButton = (
     <button

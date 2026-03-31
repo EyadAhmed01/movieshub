@@ -165,6 +165,16 @@ function AppShellInner({ children }) {
             <Link href="/" className="app-top-bar__logo-link" aria-label="Home">
               <BrandLogo size={36} className="app-top-bar__logo" alt="" />
             </Link>
+            {profileCard?.preferences?.showBadgesOnHome !== false && profileCard?.watchSummary?.currentBadge && (
+              <button
+                type="button"
+                className="app-top-bar__badge-btn"
+                onClick={() => setBadgeModalOpen(true)}
+                title="Your watch badge"
+              >
+                {profileCard.watchSummary.currentBadge.title}
+              </button>
+            )}
           </div>
 
           <h1 className="app-top-bar__title">Rotten Potatoes</h1>
@@ -279,18 +289,6 @@ function AppShellInner({ children }) {
             <Link href="/profile" className="app-nav-panel__sub" onClick={() => setMenuOpen(false)}>
               Profile
             </Link>
-            {profileCard?.preferences?.showBadgesOnHome !== false && profileCard?.watchSummary?.currentBadge && (
-              <button
-                type="button"
-                className="app-nav-panel__sub"
-                onClick={() => {
-                  setMenuOpen(false);
-                  setBadgeModalOpen(true);
-                }}
-              >
-                {profileCard.watchSummary.currentBadge.title}
-              </button>
-            )}
 
             <div className="app-nav-panel__footer">
               {session?.user?.email && (

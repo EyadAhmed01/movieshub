@@ -48,9 +48,11 @@ export async function POST(request) {
   }
 
   let inferCast = false;
+  let force = false;
   try {
     const body = await request.json();
     inferCast = Boolean(body?.inferCast);
+    force = Boolean(body?.force);
   } catch {
     /* no body */
   }
@@ -72,14 +74,16 @@ export async function POST(request) {
 
     for (const m of movies) {
       if (!m.tmdbId) continue;
-      const hasG = Array.isArray(m.genres) && m.genres.length > 0;
-      const needs =
-        m.runtimeMinutes == null ||
-        m.runtimeMinutes <= 0 ||
-        !hasG ||
-        !hasCast(m) ||
-        castMissingProfilePhotos(m.cast);
-      if (!needs) continue;
+      if (!force) {
+        const hasG = Array.isArray(m.genres) && m.genres.length > 0;
+        const needs =
+          m.runtimeMinutes == null ||
+          m.runtimeMinutes <= 0 ||
+          !hasG ||
+          !hasCast(m) ||
+          castMissingProfilePhotos(m.cast);
+        if (!needs) continue;
+      }
       const meta = await fetchMovieByTmdbId(m.tmdbId);
       await sleep(120);
       if (!meta) continue;
@@ -99,14 +103,16 @@ export async function POST(request) {
 
     for (const s of series) {
       if (!s.tmdbId) continue;
-      const hasG = Array.isArray(s.genres) && s.genres.length > 0;
-      const needs =
-        s.episodeRuntimeMinutes == null ||
-        s.episodeRuntimeMinutes <= 0 ||
-        !hasG ||
-        !hasCast(s) ||
-        castMissingProfilePhotos(s.cast);
-      if (!needs) continue;
+      if (!force) {
+        const hasG = Array.isArray(s.genres) && s.genres.length > 0;
+        const needs =
+          s.episodeRuntimeMinutes == null ||
+          s.episodeRuntimeMinutes <= 0 ||
+          !hasG ||
+          !hasCast(s) ||
+          castMissingProfilePhotos(s.cast);
+        if (!needs) continue;
+      }
       const meta = await fetchTvByTmdbId(s.tmdbId);
       await sleep(120);
       if (!meta) continue;
