@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 const field = {
@@ -17,7 +17,6 @@ const field = {
 };
 
 export default function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered");
   const [email, setEmail] = useState("");
@@ -29,18 +28,25 @@ export default function LoginForm() {
     e.preventDefault();
     setError("");
     setPending(true);
+    const origin = window.location.origin;
+    const home = `${origin}/`;
     const res = await signIn("credentials", {
       email: email.trim().toLowerCase(),
       password,
       redirect: false,
+      callbackUrl: home,
     });
-    setPending(false);
     if (res?.error) {
       setError("Invalid email or password.");
+      setPending(false);
       return;
     }
-    router.push("/");
-    router.refresh();
+    if (res?.ok) {
+      // Full navigation so the session cookie is always sent (fixes stuck loading on Vercel)
+      window.location.assign(home);
+      return;
+    }
+    setPending(false);
   }
 
   return (

@@ -43,17 +43,22 @@ export default function SignupPage() {
       setError(data.error || "Could not sign up.");
       return;
     }
+    const origin = window.location.origin;
+    const home = `${origin}/`;
     const sign = await signIn("credentials", {
       email: email.trim().toLowerCase(),
       password,
       redirect: false,
+      callbackUrl: home,
     });
     if (sign?.error) {
       router.push("/login?registered=1");
       return;
     }
-    router.push("/");
-    router.refresh();
+    if (sign?.ok) {
+      window.location.assign(home);
+      return;
+    }
   }
 
   return (
