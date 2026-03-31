@@ -369,11 +369,11 @@ function AddForm({
 const colLabel = (label, right) => (
   <span
     style={{
-      fontSize: 11,
-      color: "#4a4a4a",
-      letterSpacing: "0.12em",
+      fontSize: 12,
+      color: "#8a8580",
+      letterSpacing: "0.14em",
       fontFamily: FF.mono,
-      fontWeight: 500,
+      fontWeight: 600,
       textAlign: right ? "right" : "left",
     }}
   >
@@ -388,18 +388,23 @@ const colLabelYou = () => (
       flexDirection: "column",
       alignItems: "flex-end",
       gap: 2,
-      fontSize: 11,
-      color: "#4a4a4a",
-      letterSpacing: "0.12em",
+      fontSize: 12,
+      color: "#8a8580",
+      letterSpacing: "0.14em",
       fontFamily: FF.mono,
-      fontWeight: 500,
+      fontWeight: 600,
       lineHeight: 1.1,
     }}
   >
     <span>YOU</span>
-    <span style={{ fontSize: 9, letterSpacing: "0.1em", color: "#3a3a3a" }}>/10</span>
+    <span style={{ fontSize: 10, letterSpacing: "0.1em", color: "#5a5550" }}>/10</span>
   </span>
 );
+
+/** Sucks up extra row width on desktop so title doesn’t sit miles from year/ratings */
+function TrackerGridFiller() {
+  return <span className="tracker-grid-filler" aria-hidden="true" />;
+}
 
 export default function HomeTracker() {
   const { status } = useSession();
@@ -712,6 +717,7 @@ export default function HomeTracker() {
                   <span />
                   {colLabel("#")}
                   {colLabel("TITLE")}
+                  <TrackerGridFiller />
                   {colLabel("YEAR", true)}
                   {colLabelYou()}
                   {colLabel("TMDB", true)}
@@ -722,10 +728,10 @@ export default function HomeTracker() {
                     key={m.id}
                     className={`tracker-row tracker-movie-grid tracker-movie-row tracker-row-animate${m.tmdbId ? " tracker-row--tmdb" : ""}`}
                     style={{
-                      padding: "9px 6px",
-                      margin: "0 -6px",
-                      borderRadius: 6,
-                      borderBottom: "1px solid #0f0f0f",
+                      padding: "10px 8px",
+                      margin: "0 -4px",
+                      borderRadius: 8,
+                      borderBottom: "1px solid #121212",
                       cursor: m.tmdbId ? "pointer" : undefined,
                     }}
                     onClick={
@@ -771,6 +777,7 @@ export default function HomeTracker() {
                   <span className="tracker-row-title" title={m.overview || m.title}>
                     {m.title}
                   </span>
+                  <TrackerGridFiller />
                   <span className="tracker-row-meta tracker-row-meta--right">{m.year}</span>
                   <RatingOutOfTen value={m.userRating || 0} onChange={(v) => setMovieRating(m.id, v)} />
                   <span className="tracker-row-tmdb">
@@ -863,21 +870,22 @@ export default function HomeTracker() {
                   <span />
                   {colLabel("#")}
                   {colLabel("TITLE")}
+                  <TrackerGridFiller />
                   {colLabel("YEARS", true)}
                   {colLabel("EP", true)}
-                {colLabelYou()}
-                {colLabel("TMDB", true)}
-                <span />
-              </div>
+                  {colLabelYou()}
+                  {colLabel("TMDB", true)}
+                  <span />
+                </div>
                 {filteredSeries.map((s, i) => (
                   <div
                     key={s.id}
                     className={`tracker-row tracker-series-grid tracker-series-row tracker-row-animate${s.tmdbId ? " tracker-row--tmdb" : ""}`}
                     style={{
-                      padding: "9px 6px",
-                      margin: "0 -6px",
-                      borderRadius: 6,
-                      borderBottom: "1px solid #0f0f0f",
+                      padding: "10px 8px",
+                      margin: "0 -4px",
+                      borderRadius: 8,
+                      borderBottom: "1px solid #121212",
                       cursor: s.tmdbId ? "pointer" : undefined,
                     }}
                     onClick={
@@ -923,6 +931,7 @@ export default function HomeTracker() {
                   <span className="tracker-row-title" title={s.overview || s.title}>
                     {s.title}
                   </span>
+                  <TrackerGridFiller />
                   <span className="tracker-row-meta tracker-row-meta--right">{s.years}</span>
                   <span
                     className="tracker-row-meta tracker-row-meta--right"

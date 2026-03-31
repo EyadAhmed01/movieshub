@@ -258,6 +258,12 @@ button.tracker-mobile-nav-link:last-of-type {
   max-width: 100%;
 }
 
+.tracker-page-animate.tracker-root-layout {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .tracker-main-grid {
   display: grid;
   gap: 0;
@@ -283,12 +289,43 @@ button.tracker-mobile-nav-link:last-of-type {
   scrollbar-color: #333 #0a0a0a;
 }
 
+@media (min-width: 901px) {
+  .tracker-table-scroll {
+    background: linear-gradient(180deg, #0e0e0e 0%, #0a0a0a 100%);
+    border: 1px solid #1e1e1e;
+    border-radius: 14px;
+    padding: 10px 14px 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    min-width: 0;
+  }
+}
+
+/* Small laptop / tablet landscape: thin scrollbar + min grid width so columns don’t crush */
+@media (min-width: 901px) and (max-width: 1180px) {
+  .tracker-table-scroll {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #444 #141414;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tracker-table-scroll .tracker-movie-grid,
+  .tracker-table-scroll .tracker-series-grid {
+    min-width: min(100%, 640px);
+  }
+
+  .tracker-movie-grid > *:nth-child(6) .rating-o10__btn,
+  .tracker-series-grid > *:nth-child(7) .rating-o10__btn {
+    min-width: 22px;
+  }
+}
+
 .tracker-row-title {
-  font-size: 15px;
+  font-size: 16px;
   font-family: var(--font-sans), system-ui, sans-serif;
-  font-weight: 400;
-  color: #d8d4cc;
-  line-height: 1.45;
+  font-weight: 500;
+  color: #f0ebe3;
+  line-height: 1.4;
   padding-right: 8px;
 }
 
@@ -314,17 +351,36 @@ button.tracker-mobile-nav-link:last-of-type {
 }
 
 .tracker-row-tmdb {
-  font-size: 11px;
-  color: #555;
+  font-size: 12px;
+  color: #7a756c;
   font-family: var(--font-mono), ui-monospace, monospace;
   text-align: right;
 }
 
-/* YOU = 1–10 rating; title wraps up to 2 lines; no min-width — fits narrow split columns */
+@media (min-width: 901px) {
+  .tracker-row-idx {
+    color: #5a5854;
+  }
+}
+
+/* Desktop: capped title + 1fr spacer so year/ratings sit together (no huge empty mid-row gap) */
+.tracker-grid-filler {
+  min-width: 0;
+  min-height: 0;
+}
+
 .tracker-movie-grid {
   display: grid;
-  grid-template-columns: 104px 40px minmax(0, 1fr) 56px 192px 52px 40px;
-  gap: 8px;
+  grid-template-columns:
+    86px
+    34px
+    minmax(100px, min(360px, 40vw))
+    minmax(12px, 1fr)
+    48px
+    minmax(148px, 252px)
+    52px
+    42px;
+  gap: 10px 12px;
   align-items: center;
   width: 100%;
   min-width: 0;
@@ -344,26 +400,35 @@ button.tracker-mobile-nav-link:last-of-type {
   line-height: 1.4;
 }
 
-.tracker-movie-grid > *:nth-child(5),
-.tracker-series-grid > *:nth-child(6) {
+.tracker-movie-grid > *:nth-child(6),
+.tracker-series-grid > *:nth-child(7) {
   justify-self: end;
   width: 100%;
-  max-width: 192px;
+  max-width: min(252px, 100%);
   min-width: 0;
   overflow: hidden;
 }
 
 .tracker-movie-grid--head {
   align-items: end;
-  padding-bottom: 6px;
-  margin-bottom: 2px;
-  border-bottom: 1px solid #181818;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #252525;
 }
 
 .tracker-series-grid {
   display: grid;
-  grid-template-columns: 104px 40px minmax(0, 1fr) 68px 44px 192px 52px 40px;
-  gap: 8px;
+  grid-template-columns:
+    86px
+    34px
+    minmax(100px, min(300px, 34vw))
+    minmax(12px, 1fr)
+    64px
+    44px
+    minmax(148px, 252px)
+    52px
+    42px;
+  gap: 10px 12px;
   align-items: center;
   width: 100%;
   min-width: 0;
@@ -385,9 +450,73 @@ button.tracker-mobile-nav-link:last-of-type {
 
 .tracker-series-grid--head {
   align-items: end;
-  padding-bottom: 6px;
-  margin-bottom: 2px;
-  border-bottom: 1px solid #181818;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #252525;
+}
+
+/* Wide desktop: a bit more air and larger title cap */
+@media (min-width: 1181px) {
+  .tracker-movie-grid {
+    grid-template-columns:
+      92px
+      38px
+      minmax(160px, min(400px, 38vw))
+      minmax(24px, 1fr)
+      52px
+      minmax(200px, 260px)
+      56px
+      44px;
+    gap: 10px 14px;
+  }
+
+  .tracker-series-grid {
+    grid-template-columns:
+      92px
+      38px
+      minmax(140px, min(360px, 34vw))
+      minmax(24px, 1fr)
+      72px
+      48px
+      minmax(200px, 260px)
+      56px
+      44px;
+    gap: 10px 14px;
+  }
+
+  .tracker-movie-grid > *:nth-child(6),
+  .tracker-series-grid > *:nth-child(7) {
+    max-width: 260px;
+  }
+}
+
+/* Narrow desktop / small laptop: wrap 1–10 row, smaller posters */
+@media (min-width: 901px) and (max-width: 1180px) {
+  .tracker-movie-grid > *:nth-child(6) .rating-o10,
+  .tracker-series-grid > *:nth-child(7) .rating-o10 {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 5px;
+    max-width: 220px;
+    margin-left: auto;
+  }
+
+  .tracker-movie-grid .tracker-row-poster-wrap,
+  .tracker-series-grid .tracker-row-poster-wrap {
+    width: 78px !important;
+  }
+
+  .tracker-movie-grid .tracker-row-poster-wrap img,
+  .tracker-series-grid .tracker-row-poster-wrap img {
+    width: 72px !important;
+    height: 108px !important;
+  }
+
+  .tracker-movie-grid .tracker-row-poster-wrap > div,
+  .tracker-series-grid .tracker-row-poster-wrap > div {
+    width: 72px !important;
+    height: 108px !important;
+  }
 }
 
 .tracker-section-head {
@@ -483,6 +612,21 @@ button.tracker-mobile-nav-link:last-of-type {
     align-self: start;
   }
 
+  .tracker-movie-grid.tracker-movie-row > .tracker-grid-filler {
+    grid-column: 1;
+    grid-row: 3;
+    width: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+    pointer-events: none;
+    justify-self: start;
+    align-self: start;
+  }
+
   .tracker-movie-grid.tracker-movie-row > *:nth-child(3) {
     grid-column: 2;
     grid-row: 1;
@@ -493,7 +637,7 @@ button.tracker-mobile-nav-link:last-of-type {
     padding-right: 4px !important;
   }
 
-  .tracker-movie-grid.tracker-movie-row > *:nth-child(7) {
+  .tracker-movie-grid.tracker-movie-row > *:nth-child(8) {
     grid-column: 3;
     grid-row: 1;
     align-self: start;
@@ -505,14 +649,14 @@ button.tracker-mobile-nav-link:last-of-type {
     align-self: center;
   }
 
-  .tracker-movie-grid.tracker-movie-row > *:nth-child(4) {
+  .tracker-movie-grid.tracker-movie-row > *:nth-child(5) {
     grid-column: 3;
     grid-row: 2;
     justify-self: end;
     align-self: center;
   }
 
-  .tracker-movie-grid.tracker-movie-row > *:nth-child(5) {
+  .tracker-movie-grid.tracker-movie-row > *:nth-child(6) {
     grid-column: 1 / -1;
     grid-row: 3;
     justify-self: stretch !important;
@@ -522,7 +666,7 @@ button.tracker-mobile-nav-link:last-of-type {
     overflow: visible !important;
   }
 
-  .tracker-movie-grid.tracker-movie-row > *:nth-child(6) {
+  .tracker-movie-grid.tracker-movie-row > *:nth-child(7) {
     grid-column: 1 / -1;
     grid-row: 4;
     justify-self: stretch;
@@ -537,8 +681,8 @@ button.tracker-mobile-nav-link:last-of-type {
     text-align: left !important;
   }
 
-  .tracker-movie-grid.tracker-movie-row > *:nth-child(6)::before,
-  .tracker-series-grid.tracker-series-row > *:nth-child(7)::before {
+  .tracker-movie-grid.tracker-movie-row > *:nth-child(7)::before,
+  .tracker-series-grid.tracker-series-row > *:nth-child(8)::before {
     content: "TMDB ";
     font-size: 11px;
     letter-spacing: 0.06em;
@@ -567,6 +711,21 @@ button.tracker-mobile-nav-link:last-of-type {
     align-self: start;
   }
 
+  .tracker-series-grid.tracker-series-row > .tracker-grid-filler {
+    grid-column: 1;
+    grid-row: 4;
+    width: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+    pointer-events: none;
+    justify-self: start;
+    align-self: start;
+  }
+
   .tracker-series-grid.tracker-series-row > *:nth-child(3) {
     grid-column: 2;
     grid-row: 1;
@@ -577,7 +736,7 @@ button.tracker-mobile-nav-link:last-of-type {
     padding-right: 4px !important;
   }
 
-  .tracker-series-grid.tracker-series-row > *:nth-child(8) {
+  .tracker-series-grid.tracker-series-row > *:nth-child(9) {
     grid-column: 3;
     grid-row: 1;
     align-self: start;
@@ -589,20 +748,20 @@ button.tracker-mobile-nav-link:last-of-type {
     align-self: center;
   }
 
-  .tracker-series-grid.tracker-series-row > *:nth-child(4) {
+  .tracker-series-grid.tracker-series-row > *:nth-child(5) {
     grid-column: 3;
     grid-row: 2;
     justify-self: end;
     align-self: center;
   }
 
-  .tracker-series-grid.tracker-series-row > *:nth-child(5) {
+  .tracker-series-grid.tracker-series-row > *:nth-child(6) {
     grid-column: 2;
     grid-row: 3;
     align-self: center;
   }
 
-  .tracker-series-grid.tracker-series-row > *:nth-child(6) {
+  .tracker-series-grid.tracker-series-row > *:nth-child(7) {
     grid-column: 1 / -1;
     grid-row: 4;
     justify-self: stretch !important;
@@ -612,7 +771,7 @@ button.tracker-mobile-nav-link:last-of-type {
     overflow: visible !important;
   }
 
-  .tracker-series-grid.tracker-series-row > *:nth-child(7) {
+  .tracker-series-grid.tracker-series-row > *:nth-child(8) {
     grid-column: 1 / -1;
     grid-row: 5;
     justify-self: stretch;
@@ -738,29 +897,31 @@ button.tracker-mobile-nav-link:last-of-type {
 /* —— 1–10 rating —— */
 .rating-o10 {
   display: flex;
-  gap: 4px;
+  gap: 5px;
   justify-content: flex-end;
   flex-wrap: nowrap;
   width: 100%;
   box-sizing: border-box;
-  padding: 3px 0;
+  padding: 4px 0;
 }
 
 .rating-o10__btn {
   flex: 1 1 0;
   min-width: 0;
-  max-width: 22px;
+  max-width: 28px;
   aspect-ratio: 1;
   padding: 0;
-  border: 1px solid #2a2a2a;
-  border-radius: 4px;
-  background: #141414;
-  color: #666;
-  font-size: 11px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #161616;
+  color: #7a7874;
+  font-size: 12px;
   font-family: var(--font-mono), ui-monospace, monospace;
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition:
     transform 0.12s ease,
     background 0.15s ease,
@@ -770,9 +931,9 @@ button.tracker-mobile-nav-link:last-of-type {
 }
 
 .rating-o10__btn:hover {
-  transform: scale(1.12);
-  border-color: #444;
-  color: #888;
+  transform: scale(1.08);
+  border-color: #4a4a4a;
+  color: #b8b4ac;
   z-index: 1;
 }
 
