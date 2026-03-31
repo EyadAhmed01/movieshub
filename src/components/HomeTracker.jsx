@@ -12,6 +12,11 @@ import RecommendationDetailModal from "@/components/RecommendationDetailModal";
 import BadgeInfoModal from "@/components/BadgeInfoModal";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w92";
+/** Sharper posters in library rows (not TMDB hint thumbnails). */
+const TMDB_POSTER_ROW = "https://image.tmdb.org/t/p/w185";
+const ROW_POSTER_IMG_W = 64;
+const ROW_POSTER_IMG_H = 96;
+const ROW_POSTER_WRAP_W = 72;
 
 const YEARS = Array.from({ length: 2026 - 1950 + 1 }, (_, i) => 2026 - i);
 
@@ -40,6 +45,11 @@ const toolbarNavButton = {
 function posterSrc(posterPath) {
   if (!posterPath) return null;
   return `${TMDB_IMG}${posterPath}`;
+}
+
+function posterSrcRow(posterPath) {
+  if (!posterPath) return null;
+  return `${TMDB_POSTER_ROW}${posterPath}`;
 }
 
 async function apiJson(url, options = {}) {
@@ -662,8 +672,32 @@ export default function HomeTracker() {
   const [profileCard, setProfileCard] = useState(null);
   const [badgeModalOpen, setBadgeModalOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [headerToolsOpen, setHeaderToolsOpen] = useState(true);
 
   const closeMobileNav = useCallback(() => setMobileNavOpen(false), []);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("tracker-header-tools-open") === "0") {
+        setHeaderToolsOpen(false);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const toggleHeaderTools = useCallback(() => {
+    setMobileNavOpen(false);
+    setHeaderToolsOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("tracker-header-tools-open", next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
 
   const showFlash = useCallback((msg) => {
     setFlash(msg);
@@ -845,7 +879,10 @@ export default function HomeTracker() {
   }
 
   return (
-    <div className="tracker-page-animate" style={{ minHeight: "100vh", background: "#0a0a0a", fontFamily: FF.sans, color: "#e8e0d0" }}>
+    <div
+      className="tracker-page-animate tracker-root-layout"
+      style={{ minHeight: "100vh", background: "#0a0a0a", fontFamily: FF.sans, color: "#e8e0d0" }}
+    >
       {wtwOpen && <WhatToWatchModal onClose={() => setWtwOpen(false)} />}
       <BadgeInfoModal
         open={badgeModalOpen}
@@ -900,7 +937,7 @@ export default function HomeTracker() {
                 All Titles
               </h1>
             </div>
-            <div className="tracker-user-bar" style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <div className="tracker-user-bar" style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
               <span
                 style={{
                   fontSize: 14,
@@ -918,6 +955,21 @@ export default function HomeTracker() {
               </span>
               <button
                 type="button"
+                className="tracker-header-tools-toggle"
+                onClick={toggleHeaderTools}
+                aria-expanded={headerToolsOpen}
+                title={headerToolsOpen ? "Hide navigation and search" : "Show navigation and search"}
+                style={{
+                  ...toolbarNavButton,
+                  color: "#9a948a",
+                  border: "1px solid #4d4d4d",
+                  fontSize: 12,
+                }}
+              >
+                {headerToolsOpen ? "▲ Hide toolbar" : "▼ Show toolbar"}
+              </button>
+              <button
+                type="button"
                 onClick={() => signOut({ callbackUrl: "/login" })}
                 style={{
                   ...toolbarNavButton,
@@ -929,6 +981,7 @@ export default function HomeTracker() {
               </button>
             </div>
           </div>
+          {headerToolsOpen && (
           <div className="tracker-toolbar">
             <div className="tracker-toolbar-cluster">
               <div className="tracker-toolbar-inner tracker-toolbar-inner--desktop">
@@ -1070,6 +1123,7 @@ export default function HomeTracker() {
               </div>
             </div>
           </div>
+          )}
           <div className="tracker-tabs">
             {[
               { key: "all", label: "All" },
@@ -1101,7 +1155,7 @@ export default function HomeTracker() {
               </button>
             ))}
           </div>
-          <NetflixImportPanel onImported={refreshAll} />
+          {headerToolsOpen && <NetflixImportPanel onImported={refreshAll} />}
         </div>
       </div>
 
@@ -1206,7 +1260,7 @@ export default function HomeTracker() {
                 {filteredMovies.map((m, i) => (
                   <div
                     key={m.id}
-                    className="tracker-row tracker-movie-grid tracker-row-animate"
+                    className="tracker-row tracker-movie-grid tracker-movie-row tracker-row-animate"
                     style={{
                       padding: "9px 6px",
                       margin: "0 -6px",
@@ -1214,15 +1268,35 @@ export default function HomeTracker() {
                       borderBottom: "1px solid #0f0f0f",
                     }}
                   >
-                  <div style={{ width: 36 }}>
-                    {m.posterPath && (
+                  <div
+                    className="tracker-row-poster-wrap"
+                    style={{ width: ROW_POSTER_WRAP_W, flexShrink: 0 }}
+                  >
+                    {m.posterPath ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={posterSrc(m.posterPath)}
+                        src={posterSrcRow(m.posterPath)}
                         alt=""
-                        width={32}
-                        height={48}
-                        style={{ objectFit: "cover", borderRadius: 4, boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}
+                        width={ROW_POSTER_IMG_W}
+                        height={ROW_POSTER_IMG_H}
+                        style={{
+                          objectFit: "cover",
+                          borderRadius: 6,
+                          boxShadow: "0 4px 14px rgba(0,0,0,0.45)",
+                          display: "block",
+                          width: ROW_POSTER_IMG_W,
+                          height: ROW_POSTER_IMG_H,
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: ROW_POSTER_IMG_W,
+                          height: ROW_POSTER_IMG_H,
+                          borderRadius: 6,
+                          background: "#1a1a1a",
+                          border: "1px solid #252525",
+                        }}
                       />
                     )}
                   </div>
@@ -1340,7 +1414,7 @@ export default function HomeTracker() {
                 {filteredSeries.map((s, i) => (
                   <div
                     key={s.id}
-                    className="tracker-row tracker-series-grid tracker-row-animate"
+                    className="tracker-row tracker-series-grid tracker-series-row tracker-row-animate"
                     style={{
                       padding: "9px 6px",
                       margin: "0 -6px",
@@ -1348,15 +1422,35 @@ export default function HomeTracker() {
                       borderBottom: "1px solid #0f0f0f",
                     }}
                   >
-                  <div style={{ width: 36 }}>
-                    {s.posterPath && (
+                  <div
+                    className="tracker-row-poster-wrap"
+                    style={{ width: ROW_POSTER_WRAP_W, flexShrink: 0 }}
+                  >
+                    {s.posterPath ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={posterSrc(s.posterPath)}
+                        src={posterSrcRow(s.posterPath)}
                         alt=""
-                        width={32}
-                        height={48}
-                        style={{ objectFit: "cover", borderRadius: 4, boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}
+                        width={ROW_POSTER_IMG_W}
+                        height={ROW_POSTER_IMG_H}
+                        style={{
+                          objectFit: "cover",
+                          borderRadius: 6,
+                          boxShadow: "0 4px 14px rgba(0,0,0,0.45)",
+                          display: "block",
+                          width: ROW_POSTER_IMG_W,
+                          height: ROW_POSTER_IMG_H,
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: ROW_POSTER_IMG_W,
+                          height: ROW_POSTER_IMG_H,
+                          borderRadius: 6,
+                          background: "#1a1a1a",
+                          border: "1px solid #252525",
+                        }}
                       />
                     )}
                   </div>
