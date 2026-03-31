@@ -25,12 +25,12 @@ const libreBaskerville = Libre_Baskerville({
 });
 
 export const metadata = {
-  title: "Viewing history",
-  description: "Movies and series you watched — with ratings and TMDB info",
-  applicationName: "Viewing history",
+  title: "Rotten Potatoes",
+  description: "Track movies and series with ratings and TMDB info",
+  applicationName: "Rotten Potatoes",
   appleWebApp: {
     capable: true,
-    title: "Viewing history",
+    title: "Rotten Potatoes",
     statusBarStyle: "black-translucent",
   },
   icons: {

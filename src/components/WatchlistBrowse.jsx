@@ -216,7 +216,7 @@ export default function WatchlistBrowse() {
                   color: "#f5f0e8",
                 }}
               >
-                Watch next
+                My List
               </h1>
               <p style={{ fontSize: 13, color: "#6a6a6a", margin: "10px 0 0", maxWidth: 520, lineHeight: 1.5 }}>
                 Search TMDB, read cast and synopsis, then save titles you plan to watch. Same chat and picks as your tracker.

@@ -175,7 +175,7 @@ export default function WhatToWatchContent({ onAddedToWatchlist }) {
         return;
       }
       if (!res.ok) throw new Error(data.error || res.statusText);
-      setAddMsg("Added to Watch next.");
+      setAddMsg("Added to My List.");
       onAddedToWatchlist?.();
     } catch (e) {
       setAddMsg(e instanceof Error ? e.message : "Could not add");
@@ -296,7 +296,7 @@ export default function WhatToWatchContent({ onAddedToWatchlist }) {
                 {addBusy ? "Adding…" : "Add to my list"}
               </button>
             ) : (
-              <span style={{ fontSize: 12, color: "#865" }}>No TMDB match — add this title manually from Watch next search.</span>
+              <span style={{ fontSize: 12, color: "#865" }}>No TMDB match — add this title manually from My List search.</span>
             )}
             {addMsg && <span style={{ fontSize: 12, color: addMsg.includes("Added") ? "#7a8" : "#a77" }}>{addMsg}</span>}
           </div>

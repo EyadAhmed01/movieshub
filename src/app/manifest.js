@@ -1,10 +1,9 @@
 /** @returns {import("next").MetadataRoute.Manifest} */
 export default function manifest() {
   return {
-    name: "Viewing history",
-    short_name: "Viewing",
-    description:
-      "Movies and series you watched — with ratings and TMDB info",
+    name: "Rotten Potatoes",
+    short_name: "Rotten Potatoes",
+    description: "Track movies and series with ratings and TMDB info",
     start_url: "/",
     display: "standalone",
     background_color: "#1a1a20",

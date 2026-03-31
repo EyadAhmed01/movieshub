@@ -1,7 +1,7 @@
 import WhatToWatchPage from "@/components/WhatToWatchPage";
 
 export const metadata = {
-  title: "What to watch?",
+  title: "What to watch? · Rotten Potatoes",
   description: "Mood-based picks from Llama, add to your watchlist",
 };
 

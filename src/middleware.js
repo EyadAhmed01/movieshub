@@ -13,6 +13,7 @@ export default withAuth({
 export const config = {
   matcher: [
     "/",
+    "/for-you",
     "/profile",
     "/analytics",
     "/what-to-watch",

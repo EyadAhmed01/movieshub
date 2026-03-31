@@ -99,71 +99,106 @@ function RecStrip({ items, onOpen }) {
   );
 }
 
-export default function RecommendationsRow() {
+export default function RecommendationsRow({ variant = "inline" }) {
+  const isPage = variant === "page";
   const [movieItems, setMovieItems] = useState([]);
   const [tvItems, setTvItems] = useState([]);
   const [reason, setReason] = useState("");
   const [algorithm, setAlgorithm] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showHow, setShowHow] = useState(false);
   const [modalItem, setModalItem] = useState(null);
   const [expanded, setExpanded] = useState(true);
 
   useEffect(() => {
+    if (isPage) return;
     try {
       if (localStorage.getItem(STORAGE_KEY) === "0") setExpanded(false);
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [isPage]);
 
   const toggleExpanded = useCallback(() => {
     setExpanded((e) => {
       const n = !e;
-      try {
-        localStorage.setItem(STORAGE_KEY, n ? "1" : "0");
-      } catch {
-        /* ignore */
+      if (!isPage) {
+        try {
+          localStorage.setItem(STORAGE_KEY, n ? "1" : "0");
+        } catch {
+          /* ignore */
+        }
       }
       return n;
     });
+  }, [isPage]);
+
+  const loadRecs = useCallback(async (background) => {
+    if (background) setRefreshing(true);
+    else setLoading(true);
+    try {
+      const res = await fetch("/api/recommendations", { credentials: "include", cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      const m = Array.isArray(data.movieItems) ? data.movieItems : [];
+      const t = Array.isArray(data.tvItems) ? data.tvItems : [];
+      if (m.length === 0 && t.length === 0 && Array.isArray(data.items)) {
+        const legacy = data.items;
+        setMovieItems(legacy.filter((x) => x.mediaType !== "tv"));
+        setTvItems(legacy.filter((x) => x.mediaType === "tv"));
+      } else {
+        setMovieItems(m);
+        setTvItems(t);
+      }
+      setReason(data.reason || "");
+      setAlgorithm(data.algorithm || null);
+    } catch {
+      setMovieItems([]);
+      setTvItems([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/recommendations", { credentials: "include" });
-        const data = await res.json().catch(() => ({}));
-        if (cancelled) return;
-        const m = Array.isArray(data.movieItems) ? data.movieItems : [];
-        const t = Array.isArray(data.tvItems) ? data.tvItems : [];
-        if (m.length === 0 && t.length === 0 && Array.isArray(data.items)) {
-          const legacy = data.items;
-          setMovieItems(legacy.filter((x) => x.mediaType !== "tv"));
-          setTvItems(legacy.filter((x) => x.mediaType === "tv"));
-        } else {
-          setMovieItems(m);
-          setTvItems(t);
-        }
-        setReason(data.reason || "");
-        setAlgorithm(data.algorithm || null);
-      } catch {
-        if (!cancelled) {
-          setMovieItems([]);
-          setTvItems([]);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
+    loadRecs(false);
+  }, [loadRecs]);
+
+  useEffect(() => {
+    const onRefresh = () => {
+      loadRecs(true);
     };
-  }, []);
+    window.addEventListener("rp-recommendations-refresh", onRefresh);
+    return () => window.removeEventListener("rp-recommendations-refresh", onRefresh);
+  }, [loadRecs]);
 
   const totalPicks = movieItems.length + tvItems.length;
   const hasAny = totalPicks > 0;
+
+  const refreshBtn = isPage ? (
+    <button
+      type="button"
+      onClick={() => loadRecs(true)}
+      disabled={refreshing || loading}
+      style={{
+        flexShrink: 0,
+        background: refreshing ? "#2a2a2a" : "#1a1a1a",
+        border: "1px solid #3a3a3a",
+        borderRadius: 8,
+        color: "#c8c4ba",
+        fontSize: 11,
+        fontFamily: FF.mono,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        padding: "10px 16px",
+        cursor: refreshing || loading ? "wait" : "pointer",
+        transition: "border-color 0.15s ease, background 0.15s ease",
+      }}
+    >
+      {refreshing ? "Updating…" : "Refresh picks"}
+    </button>
+  ) : null;
 
   const headerButton = (
     <button
@@ -233,8 +268,9 @@ export default function RecommendationsRow() {
   if (loading) {
     return (
       <section style={{ margin: "0 0 28px", padding: "18px 0", borderBottom: "1px solid #141414" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           {headerButton}
+          {refreshBtn}
         </div>
         {expanded && (
           <p style={{ fontSize: 11, color: "#444", fontFamily: FF.mono, letterSpacing: "0.12em", margin: "12px 0 0 24px" }}>
@@ -250,6 +286,7 @@ export default function RecommendationsRow() {
       <section style={{ margin: "0 0 28px", padding: "18px 0", borderBottom: "1px solid #141414" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           {headerButton}
+          {refreshBtn}
         </div>
         {expanded && (
           <p style={{ fontSize: 13, color: "#555", margin: "12px 0 0 24px", maxWidth: 520, lineHeight: 1.5 }}>
@@ -265,6 +302,7 @@ export default function RecommendationsRow() {
       {modalItem && <RecommendationDetailModal item={modalItem} onClose={() => setModalItem(null)} />}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: expanded ? 10 : 0 }}>
         {headerButton}
+        {refreshBtn}
       </div>
 
       {expanded && (

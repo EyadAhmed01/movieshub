@@ -87,7 +87,7 @@ export default function SignupPage() {
             fontWeight: 500,
           }}
         >
-          Viewing history
+          Rotten Potatoes
         </p>
         <h1
           style={{

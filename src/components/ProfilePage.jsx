@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { FF } from "@/lib/fonts";
+import NetflixImportPanel from "@/components/NetflixImportPanel";
 
 async function apiJson(url, options = {}) {
   const res = await fetch(url, {
@@ -282,7 +283,7 @@ export default function ProfilePage() {
                 Analytics
               </Link>
               <Link href="/watchlist" style={linkBtn}>
-                Watch next
+                My List
               </Link>
               <button
                 type="button"
@@ -539,7 +540,7 @@ export default function ProfilePage() {
               <h3 style={{ margin: "0 0 14px", fontSize: 14, fontFamily: FF.mono, color: "#888", letterSpacing: "0.1em" }}>APP PREFERENCES</h3>
               <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, cursor: "pointer" }}>
                 <input type="checkbox" checked={showBadgesOnHome} onChange={(e) => setShowBadgesOnHome(e.target.checked)} />
-                <span style={{ fontSize: 13, color: "#bbb" }}>Show current rank on the library header</span>
+                <span style={{ fontSize: 13, color: "#bbb" }}>Show current rank in the app menu</span>
               </label>
               <div style={{ marginBottom: 16 }}>
                 <span style={{ display: "block", fontSize: 11, fontFamily: FF.mono, color: "#777", marginBottom: 8 }}>CHAT SPOILER HINTS (stored for later)</span>
@@ -584,6 +585,13 @@ export default function ProfilePage() {
                 <span style={{ marginLeft: 12, fontSize: 12, color: prefMsg === "Saved." ? "#6a8a6a" : "#c88" }}>{prefMsg}</span>
               )}
             </div>
+
+            <NetflixImportPanel
+              onImported={() => {
+                window.dispatchEvent(new CustomEvent("rp-app-refresh"));
+                window.dispatchEvent(new CustomEvent("rp-recommendations-refresh"));
+              }}
+            />
           </>
         )}
       </main>

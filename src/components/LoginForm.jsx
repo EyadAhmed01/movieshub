@@ -74,7 +74,7 @@ export default function LoginForm() {
             fontWeight: 500,
           }}
         >
-          Viewing history
+          Rotten Potatoes
         </p>
         <h1
           style={{

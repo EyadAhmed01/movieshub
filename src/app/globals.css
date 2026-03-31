@@ -970,3 +970,228 @@ button.rec-card-link:hover {
   }
 }
 
+/* —— App shell (Rotten Potatoes top bar + menu) —— */
+.app-top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 150;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: rgba(10, 10, 10, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #181818;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+}
+
+.app-top-bar__inner {
+  display: grid;
+  grid-template-columns: auto 1fr minmax(96px, min(42vw, 280px));
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 10px;
+  max-width: 1240px;
+  margin: 0 auto;
+  min-height: 52px;
+  box-sizing: border-box;
+}
+
+.app-top-bar__left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-top-bar__logo-link {
+  display: flex;
+  align-items: center;
+  line-height: 0;
+}
+
+.app-top-bar__logo {
+  display: block;
+  border-radius: 10px;
+}
+
+.app-top-bar__title {
+  margin: 0;
+  font-size: clamp(14px, 3.8vw, 17px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: center;
+  color: #f5f0e8;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  text-transform: none;
+}
+
+.app-top-bar__search-wrap {
+  min-width: 0;
+}
+
+.app-top-bar__menu-btn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #3a3a3a;
+  border-radius: 10px;
+  background: #141414;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.app-top-bar__menu-btn:hover {
+  border-color: #5a5a5a;
+  background: #181818;
+}
+
+.app-top-bar__menu-icon {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: #c8c4ba;
+  border-radius: 1px;
+  box-shadow: 0 -6px 0 #c8c4ba, 0 6px 0 #c8c4ba;
+}
+
+.app-main-pad {
+  box-sizing: border-box;
+}
+
+.app-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  background: rgba(0, 0, 0, 0.5);
+  animation: appNavFadeIn 0.2s ease forwards;
+}
+
+@keyframes appNavFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.app-nav-panel {
+  position: fixed;
+  z-index: 190;
+  left: 10px;
+  top: calc(env(safe-area-inset-top, 0px) + 58px);
+  min-width: 236px;
+  max-width: min(92vw, 300px);
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  padding: 10px;
+  animation: appNavPop 0.22s cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+  transform-origin: top left;
+}
+
+@keyframes appNavPop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.app-nav-panel__link:hover,
+.app-nav-panel__btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.app-nav-panel__divider {
+  height: 1px;
+  background: #252525;
+  margin: 8px 4px;
+}
+
+.app-nav-panel__sub {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 14px;
+  margin: 2px 0;
+  font-size: 12px;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  color: #7a756c;
+  text-decoration: none;
+  text-align: left;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.app-nav-panel__sub:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #b8b3a8;
+}
+
+.app-nav-panel__footer {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #252525;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-nav-panel__email {
+  font-size: 11px;
+  color: #555;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.app-nav-panel__signout {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  color: #9a948a;
+  font-size: 11px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.app-nav-panel__signout:hover {
+  border-color: #5a5a5a;
+  color: #c8c4ba;
+}
+
+@media (max-width: 380px) {
+  .app-top-bar__inner {
+    grid-template-columns: auto 1fr minmax(80px, 1fr);
+    gap: 8px;
+  }
+
+  .app-top-bar__title {
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+}
+

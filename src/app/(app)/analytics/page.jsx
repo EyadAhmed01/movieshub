@@ -1,7 +1,7 @@
 import AnalyticsPage from "@/components/AnalyticsPage";
 
 export const metadata = {
-  title: "Analytics · Viewing history",
+  title: "Analytics · Rotten Potatoes",
   description: "Stats, top ratings, and time watched",
 };
 

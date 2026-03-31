@@ -1,7 +1,7 @@
 import ProfilePage from "@/components/ProfilePage";
 
 export const metadata = {
-  title: "My profile · Viewing history",
+  title: "Profile · Rotten Potatoes",
   description: "Taste profile, badges, and account settings",
 };
 

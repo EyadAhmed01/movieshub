@@ -1,7 +1,7 @@
 import WatchlistBrowse from "@/components/WatchlistBrowse";
 
 export const metadata = {
-  title: "Watch next · Discover",
+  title: "My List · Rotten Potatoes",
   description: "Browse TMDB, read details, and save titles you plan to watch",
 };
 

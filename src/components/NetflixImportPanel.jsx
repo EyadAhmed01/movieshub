@@ -69,11 +69,11 @@ export default function NetflixImportPanel({ onImported }) {
         rounds += 1;
         const s = await postImportCsv(text, startIndex);
         merged = mergeImportSummaries(merged, s);
-        onImported?.();
         if (s.importComplete) break;
         startIndex = s.nextStartIndex ?? startIndex;
         if (startIndex >= (s.uniqueTitles ?? 0)) break;
       }
+      onImported?.();
       setResult({
         ...merged,
         truncated: merged ? !merged.importComplete : false,
@@ -113,7 +113,7 @@ export default function NetflixImportPanel({ onImported }) {
           cursor: "pointer",
         }}
       >
-        {open ? "▼ Hide Netflix import" : "▶ Import from Netflix CSV"}
+        {open ? "▼ Hide CSV import" : "▶ Import viewing history CSV"}
       </button>
 
       {open && (
@@ -128,7 +128,7 @@ export default function NetflixImportPanel({ onImported }) {
             }}
           >
             <p style={{ margin: "0 0 10px", fontSize: 11, fontFamily: FF.mono, letterSpacing: "0.14em", color: "#e50914" }}>
-              HOW TO GET YOUR FILE
+              ROTTEN POTATOES · HOW TO GET YOUR FILE
             </p>
             <ol
               style={{
@@ -140,25 +140,20 @@ export default function NetflixImportPanel({ onImported }) {
               }}
             >
               <li style={{ marginBottom: 8 }}>
-                Sign in to Netflix in a browser, open your <strong style={{ color: "#c8c4ba" }}>Account</strong> page (Profile menu →
-                Account, or{" "}
-                <a href="https://www.netflix.com/account" target="_blank" rel="noopener noreferrer" style={{ color: "#c44" }}>
-                  netflix.com/account
-                </a>
-                ).
+                From your streaming provider’s site, open <strong style={{ color: "#c8c4ba" }}>Account</strong> or{" "}
+                <strong style={{ color: "#c8c4ba" }}>Privacy</strong> (wording varies).
               </li>
               <li style={{ marginBottom: 8 }}>
-                Open <strong style={{ color: "#c8c4ba" }}>Privacy / Personal data</strong> (wording varies by country): look for{" "}
-                <strong style={{ color: "#c8c4ba" }}>Download</strong>, <strong style={{ color: "#c8c4ba" }}>Copy of your information</strong>, or{" "}
-                <strong style={{ color: "#c8c4ba" }}>Personal information</strong> — Netflix lets you request an archive of your data.
+                Request a <strong style={{ color: "#c8c4ba" }}>personal data / viewing activity</strong> export (often a downloadable{" "}
+                <strong style={{ color: "#c8c4ba" }}>.zip</strong>).
               </li>
               <li style={{ marginBottom: 8 }}>
                 Submit the request; when you receive the email, download the <strong style={{ color: "#c8c4ba" }}>.zip</strong> and unzip it.
               </li>
               <li style={{ marginBottom: 8 }}>
-                In the export folder, open the CSV that lists viewing activity — often <strong style={{ color: "#c8c4ba" }}>NetflixViewingHistory.csv</strong> or{" "}
-                <strong style={{ color: "#c8c4ba" }}>ViewingActivity.csv</strong> (sometimes under a <code style={{ color: "#666" }}>CSV</code> folder). Expected
-                header row: <code style={{ color: "#666" }}>Title,Date</code> — titles in quotes, dates like <code style={{ color: "#666" }}>3/30/26</code> (M/D/YY) are supported.
+                Open the CSV that lists viewing activity (e.g. <strong style={{ color: "#c8c4ba" }}>ViewingActivity.csv</strong> or similar, sometimes under a{" "}
+                <code style={{ color: "#666" }}>CSV</code> folder). Expected header row: <code style={{ color: "#666" }}>Title,Date</code> — titles in quotes, dates like{" "}
+                <code style={{ color: "#666" }}>3/30/26</code> (M/D/YY) are supported.
               </li>
               <li>
                 Upload that file here (or paste its contents). We strip extra quotes/spacing, match each title to{" "}
@@ -167,8 +162,8 @@ export default function NetflixImportPanel({ onImported }) {
               </li>
             </ol>
             <p style={{ margin: "12px 0 0", fontSize: 12, color: "#555", lineHeight: 1.5 }}>
-              Requires <code style={{ color: "#666" }}>TMDB_API_KEY</code> in your environment. Netflix does not provide TMDB IDs; matching is
-              best-effort (unusual titles may need to be added manually).
+              Requires <code style={{ color: "#666" }}>TMDB_API_KEY</code> in your environment. Provider exports do not include TMDB IDs; matching is best-effort
+              (unusual titles may need to be added manually).
             </p>
           </div>
 

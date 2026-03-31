@@ -190,7 +190,7 @@ export default function AnalyticsPage() {
                   borderRadius: 6,
                 }}
               >
-                Watch next
+                My List
               </Link>
               <Link
                 href="/profile"
