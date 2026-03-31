@@ -141,17 +141,17 @@ export default function LoginForm() {
               borderRadius: 6,
               color: "#fff",
               padding: "14px 22px",
-              fontSize: 12,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
+              fontSize: pending ? 14 : 12,
+              letterSpacing: pending ? "0.02em" : "0.14em",
+              textTransform: pending ? "none" : "uppercase",
               cursor: pending ? "wait" : "pointer",
-              fontFamily: FF.mono,
-              fontWeight: 600,
+              fontFamily: pending ? FF.sans : FF.mono,
+              fontWeight: pending ? 500 : 600,
               marginTop: 4,
               transition: "background 0.15s ease",
             }}
           >
-            {pending ? "…" : "Sign in"}
+            {pending ? "Signing in…" : "Sign in"}
           </button>
         </form>
         <p style={{ marginTop: 28, fontSize: 14, color: "#666", fontFamily: FF.sans, lineHeight: 1.5 }}>
