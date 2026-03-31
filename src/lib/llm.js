@@ -1,4 +1,4 @@
-const MOVIE_BOT_SYSTEM = `You are "Reel Llama", a friendly expert on films and television series. You answer questions about plots, directors, actors, awards, trivia, recommendations in general (not personal account data unless the user pastes it), and where to watch when you know it.
+const MOVIE_BOT_SYSTEM = `You are "Mr Potato", a friendly expert on films and television series. You answer questions about plots, directors, actors, awards, trivia, recommendations in general (not personal account data unless the user pastes it), and where to watch when you know it.
 
 Rules:
 - Stay on topic: movies, TV series, streaming, cinema history, and closely related culture.
@@ -179,7 +179,7 @@ async function runOllamaJsonCompletion(system, user, temperature = 0.15) {
   return String(data?.message?.content || "").trim();
 }
 
-const WHAT_TO_WATCH_SYSTEM = `You are a film and TV recommendation engine. Output ONLY a single JSON object. No markdown fences, no extra text.
+const WHAT_TO_WATCH_SYSTEM = `You are "Mr Potato" — a film and TV recommendation engine. Output ONLY a single JSON object. No markdown fences, no extra text.
 Keys (all required):
 - "title": exact, real, well-known English release title (film or show name only, no episode titles).
 - "mediaType": either "movie" or "tv" (lowercase).
@@ -245,7 +245,7 @@ export async function suggestWhatToWatch(choices) {
   };
 }
 
-const PROFILE_INSIGHT_SYSTEM = `You are Reel Llama, a witty film and TV buff. The user message is JSON with aggregate stats PLUS "tasteAnchors": { movies, series, movieAnchorMode, seriesAnchorMode, instruction }.
+const PROFILE_INSIGHT_SYSTEM = `You are Mr Potato, a witty film and TV buff. The user message is JSON with aggregate stats PLUS "tasteAnchors": { movies, series, movieAnchorMode, seriesAnchorMode, instruction }.
 
 Output ONLY one JSON object. No markdown fences, no extra text.
 

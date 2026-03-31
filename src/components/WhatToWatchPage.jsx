@@ -35,7 +35,7 @@ export default function WhatToWatchPage() {
                 What to watch?
               </h1>
               <p style={{ margin: "10px 0 0", fontSize: 13, color: "#6a6a6a", maxWidth: 520, lineHeight: 1.5 }}>
-                Answer with the controls below. Reel Llama picks one title; we try to match it on TMDB so you can add it from{" "}
+                Answer with the controls below. Mr Potato picks one title; we try to match it on TMDB so you can add it from{" "}
                 <Link href="/watchlist" style={{ color: "#c44" }}>
                   My List
                 </Link>

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { FF } from "@/lib/fonts";
+import BrandLogo from "@/components/BrandLogo";
 
 async function postImportCsv(csv, startIndex = 0) {
   const res = await fetch("/api/import/netflix", {
@@ -47,6 +48,7 @@ function mergeImportSummaries(accum, round) {
 export default function NetflixImportPanel({ onImported }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [importBatch, setImportBatch] = useState(0);
   const [err, setErr] = useState("");
   const [result, setResult] = useState(null);
   const [paste, setPaste] = useState("");
@@ -61,12 +63,14 @@ export default function NetflixImportPanel({ onImported }) {
     setErr("");
     setResult(null);
     setBusy(true);
+    setImportBatch(0);
     try {
       let startIndex = 0;
       let merged = null;
       let rounds = 0;
       while (rounds < MAX_IMPORT_ROUNDS) {
         rounds += 1;
+        setImportBatch(rounds);
         const s = await postImportCsv(text, startIndex);
         merged = mergeImportSummaries(merged, s);
         if (s.importComplete) break;
@@ -83,6 +87,7 @@ export default function NetflixImportPanel({ onImported }) {
       setErr(e instanceof Error ? e.message : "Import failed");
     } finally {
       setBusy(false);
+      setImportBatch(0);
     }
   };
 
@@ -96,6 +101,25 @@ export default function NetflixImportPanel({ onImported }) {
   };
 
   return (
+    <>
+      {busy && (
+        <div className="csv-import-loading-overlay" role="status" aria-live="polite" aria-busy="true">
+          <div className="csv-import-loading-card">
+            <BrandLogo size={80} spinning alt="" />
+            <p className="csv-import-loading-title">Importing your CSV</p>
+            <p className="csv-import-loading-sub">Matching titles to TMDB — keep this tab open</p>
+            {importBatch > 0 && (
+              <p className="csv-import-loading-batch">
+                Batch <strong>{importBatch}</strong>
+                {importBatch >= MAX_IMPORT_ROUNDS - 5 && " · almost at safety limit"}
+              </p>
+            )}
+            <div className="csv-import-loading-bar" aria-hidden>
+              <div className="csv-import-loading-bar-fill" />
+            </div>
+          </div>
+        </div>
+      )}
     <div style={{ marginTop: 16, borderTop: "1px solid #181818", paddingTop: 16 }}>
       <button
         type="button"
@@ -280,5 +304,6 @@ export default function NetflixImportPanel({ onImported }) {
         </div>
       )}
     </div>
+    </>
   );
 }

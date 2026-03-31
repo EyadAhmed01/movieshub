@@ -73,15 +73,15 @@ export default function MovieChat() {
           fontFamily: FF.display,
           lineHeight: 1,
         }}
-        title={open ? "Close Reel Llama" : "Open Reel Llama (Llama-powered movie chat)"}
+        title={open ? "Close Mr Potato" : "Open Mr Potato (AI movie chat)"}
       >
-        {open ? "×" : "🦙"}
+        {open ? "×" : "🥔"}
       </button>
 
       {open && (
         <div
           role="dialog"
-          aria-label="Reel Llama chat"
+          aria-label="Mr Potato chat"
           style={{
             position: "fixed",
             bottom: 94,
@@ -116,10 +116,10 @@ export default function MovieChat() {
                 fontWeight: 600,
               }}
             >
-              REEL LLAMA
+              MR POTATO
             </p>
             <p style={{ margin: "6px 0 0", fontSize: 12, color: "#9a9088", lineHeight: 1.4 }}>
-              Llama-powered assistant for movies &amp; series. Not connected to your library unless you paste titles.
+              Your AI spud for movies &amp; series. Not connected to your library unless you paste titles.
             </p>
           </div>
 
@@ -158,7 +158,7 @@ export default function MovieChat() {
               </div>
             ))}
             {loading && (
-              <p style={{ fontSize: 11, color: "#665", fontFamily: FF.mono, margin: 0 }}>Thinking…</p>
+              <p style={{ fontSize: 11, color: "#665", fontFamily: FF.mono, margin: 0 }}>Mr Potato is thinking…</p>
             )}
             {error && (
               <p style={{ fontSize: 12, color: "#c44", margin: 0 }}>{error}</p>

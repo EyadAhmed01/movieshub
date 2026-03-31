@@ -40,6 +40,8 @@ export default function TmdbHints({
   onQuickAdd,
   quickAddBusyTmdbId = null,
   positionDropdown = "flow",
+  /** Higher when anchored in fixed header (dropdown above page content). */
+  dropdownZIndex = 40,
 }) {
   const q = useDebounced(query, 280);
   const [items, setItems] = useState([]);
@@ -88,7 +90,7 @@ export default function TmdbHints({
           left: 0,
           right: 0,
           top: "calc(100% + 6px)",
-          zIndex: 40,
+          zIndex: dropdownZIndex,
           margin: 0,
         }
       : { margin: "8px 0 0" };

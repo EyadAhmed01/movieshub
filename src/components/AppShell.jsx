@@ -12,6 +12,7 @@ import BadgeInfoModal from "@/components/BadgeInfoModal";
 import RecommendationDetailModal from "@/components/RecommendationDetailModal";
 import { apiJson } from "@/lib/api";
 import { buildLibraryCsv, downloadTextFile } from "@/lib/exportLibraryCsv";
+import BrandLogo from "@/components/BrandLogo";
 
 function AppShellInner({ children }) {
   const pathname = usePathname();
@@ -121,7 +122,6 @@ function AppShellInner({ children }) {
   }, [showFlash]);
 
   const isHome = pathname === "/";
-  const padTop = "calc(52px + env(safe-area-inset-top, 0px))";
 
   const navLinkStyle = {
     display: "block",
@@ -163,8 +163,7 @@ function AppShellInner({ children }) {
               <span className="app-top-bar__menu-icon" aria-hidden />
             </button>
             <Link href="/" className="app-top-bar__logo-link" aria-label="Home">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/logo.svg" alt="" width={36} height={36} className="app-top-bar__logo" />
+              <BrandLogo size={36} className="app-top-bar__logo" alt="" />
             </Link>
           </div>
 
@@ -172,9 +171,9 @@ function AppShellInner({ children }) {
 
           <div className="app-top-bar__search-wrap">
             {isHome ? (
-              <div style={{ position: "relative", width: "100%", minWidth: 0 }}>
+              <div className="app-top-bar__search-inner">
                 <input
-                  placeholder="Search TMDB or filter your list…"
+                  placeholder="Search library & TMDB…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   aria-label="Search movies and your library"
@@ -184,13 +183,14 @@ function AppShellInner({ children }) {
                     boxSizing: "border-box",
                     background: "#161616",
                     border: "1px solid rgba(200, 50, 60, 0.55)",
-                    borderRadius: 8,
+                    borderRadius: 10,
                     color: "#f0ebe3",
-                    padding: "10px 12px",
-                    fontSize: 14,
+                    padding: "12px 14px",
+                    fontSize: 16,
                     fontFamily: FF.sans,
                     fontWeight: 500,
                     outline: "none",
+                    minHeight: 48,
                   }}
                 />
                 <TmdbHints
@@ -203,6 +203,7 @@ function AppShellInner({ children }) {
                   onQuickAdd={quickAddMovieFromSearch}
                   quickAddBusyTmdbId={quickAddBusyTmdbId}
                   positionDropdown="absolute"
+                  dropdownZIndex={220}
                 />
               </div>
             ) : (
@@ -215,12 +216,13 @@ function AppShellInner({ children }) {
                   boxSizing: "border-box",
                   background: "#161616",
                   border: "1px solid #333",
-                  borderRadius: 8,
+                  borderRadius: 10,
                   color: "#666",
-                  padding: "10px 12px",
-                  fontSize: 14,
+                  padding: "12px 14px",
+                  fontSize: 16,
                   fontFamily: FF.sans,
                   textDecoration: "none",
+                  minHeight: 48,
                 }}
               >
                 Search on Home…
@@ -308,9 +310,7 @@ function AppShellInner({ children }) {
         </>
       )}
 
-      <main className="app-main-pad" style={{ paddingTop: padTop }}>
-        {children}
-      </main>
+      <main className="app-main-pad">{children}</main>
 
       {flash && (
         <div

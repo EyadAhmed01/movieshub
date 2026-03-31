@@ -213,7 +213,7 @@ export default function WhatToWatchContent({ onAddedToWatchlist }) {
           cursor: !ready || loading ? "default" : "pointer",
         }}
       >
-        {loading ? "Asking Llama…" : "Get a pick"}
+        {loading ? "Asking Mr Potato…" : "Get a pick"}
       </button>
 
       {err && <p style={{ color: "#c44", marginTop: 18, fontSize: 14 }}>{err}</p>}

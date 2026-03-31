@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FF } from "@/lib/fonts";
+import BrandLogo from "@/components/BrandLogo";
 
 const field = {
   background: "#0f0f0f",
@@ -76,6 +77,9 @@ export default function SignupPage() {
       }}
     >
       <div style={{ width: "100%", maxWidth: 400 }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+          <BrandLogo size={72} alt="Rotten Potatoes" />
+        </div>
         <p
           style={{
             fontSize: 10,
@@ -85,6 +89,7 @@ export default function SignupPage() {
             marginBottom: 12,
             fontFamily: FF.mono,
             fontWeight: 500,
+            textAlign: "center",
           }}
         >
           Rotten Potatoes
@@ -98,6 +103,7 @@ export default function SignupPage() {
             lineHeight: 1.15,
             color: "#f5f0e8",
             margin: "0 0 28px",
+            textAlign: "center",
           }}
         >
           Create account

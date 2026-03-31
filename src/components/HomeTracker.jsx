@@ -7,6 +7,7 @@ import { FF } from "@/lib/fonts";
 import { apiJson } from "@/lib/api";
 import MovieChat from "@/components/MovieChat";
 import TmdbHints from "@/components/TmdbHints";
+import BrandLogo from "@/components/BrandLogo";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w92";
 /** Sharper posters in library rows (not TMDB hint thumbnails). */
@@ -561,9 +562,12 @@ export default function HomeTracker() {
           justifyContent: "center",
         }}
       >
-        <p style={{ color: "#444", fontFamily: FF.mono, fontSize: 11, letterSpacing: "0.18em", fontWeight: 500 }}>
-          LOADING…
-        </p>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+          <BrandLogo size={56} spinning alt="" />
+          <p style={{ color: "#444", fontFamily: FF.mono, fontSize: 11, letterSpacing: "0.18em", fontWeight: 500, margin: 0 }}>
+            LOADING…
+          </p>
+        </div>
       </div>
     );
   }
@@ -602,10 +606,38 @@ export default function HomeTracker() {
         style={{
           maxWidth: 1240,
           margin: "0 auto",
-          padding: "8px clamp(16px, 4vw, 40px) 0",
+          padding: "16px clamp(16px, 4vw, 40px) 0",
           borderBottom: "1px solid #181818",
         }}
       >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            marginBottom: 14,
+            flexWrap: "wrap",
+          }}
+        >
+          <BrandLogo size={48} alt="" />
+          <div>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 10,
+                letterSpacing: "0.2em",
+                color: "#e50914",
+                fontFamily: FF.mono,
+                fontWeight: 600,
+              }}
+            >
+              ROTTEN POTATOES
+            </p>
+            <p style={{ margin: "4px 0 0", fontSize: 14, color: "#8a8580", fontFamily: FF.sans }}>
+              Your library — movies &amp; series
+            </p>
+          </div>
+        </div>
         <div className="tracker-tabs">
           {[
             { key: "all", label: "All" },
