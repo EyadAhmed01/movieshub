@@ -204,80 +204,101 @@ export default function RecommendationsRow({ variant = "inline" }) {
     </button>
   );
 
-  const headerButton = (
-    <button
-      type="button"
-      onClick={toggleExpanded}
-      aria-expanded={expanded}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        flex: "1 1 auto",
-        minWidth: 0,
-        background: "none",
-        border: "none",
-        padding: "4px 0",
-        cursor: "pointer",
-        textAlign: "left",
-        color: "inherit",
-        font: "inherit",
-      }}
-    >
+  const showCollapsible = !isPage;
+  const contentVisible = isPage || expanded;
+
+  const titleBlock = (
+    <div style={{ flex: "1 1 auto", minWidth: 0, textAlign: "left" }}>
       <span
-        aria-hidden
         style={{
-          fontSize: 9,
-          color: "#666",
           fontFamily: FF.mono,
-          width: 14,
-          flexShrink: 0,
-          transition: "transform 0.15s ease",
-          transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+          fontSize: 10,
+          letterSpacing: "0.2em",
+          color: "#e50914",
+          display: "block",
         }}
       >
-        ▶
+        FOR YOU
       </span>
-      <span style={{ minWidth: 0 }}>
-        <span
+      {!loading && hasAny && (
+        <span style={{ fontSize: 11, color: "#555", fontFamily: FF.sans, marginTop: 4, display: "block" }}>
+          {movieItems.length} movies · {tvItems.length} series · tap for details
+        </span>
+      )}
+      {!loading && !hasAny && (
+        <span style={{ fontSize: 11, color: "#555", fontFamily: FF.sans, marginTop: 4, display: "block" }}>
+          Suggestions from your ratings (TMDB)
+        </span>
+      )}
+      {loading && (
+        <span style={{ fontSize: 11, color: "#444", fontFamily: FF.sans, marginTop: 4, display: "block" }}>
+          Loading picks…
+        </span>
+      )}
+    </div>
+  );
+
+  const headerRow = (
+    <div style={{ marginBottom: isPage || expanded ? 10 : 0 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      {showCollapsible ? (
+        <button
+          type="button"
+          onClick={toggleExpanded}
+          aria-expanded={expanded}
           style={{
-            fontFamily: FF.mono,
-            fontSize: 10,
-            letterSpacing: "0.2em",
-            color: "#e50914",
-            display: "block",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            flex: "1 1 auto",
+            minWidth: 0,
+            background: "none",
+            border: "none",
+            padding: "4px 0",
+            cursor: "pointer",
+            textAlign: "left",
+            color: "inherit",
+            font: "inherit",
           }}
         >
-          FOR YOU
-        </span>
-        {!loading && hasAny && (
-          <span style={{ fontSize: 11, color: "#555", fontFamily: FF.sans, marginTop: 4, display: "block" }}>
-            {movieItems.length} movies · {tvItems.length} series · tap for details
+          <span
+            aria-hidden
+            style={{
+              fontSize: 9,
+              color: "#666",
+              fontFamily: FF.mono,
+              width: 14,
+              flexShrink: 0,
+              transition: "transform 0.15s ease",
+              transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+            }}
+          >
+            ▶
           </span>
-        )}
-        {!loading && !hasAny && (
-          <span style={{ fontSize: 11, color: "#555", fontFamily: FF.sans, marginTop: 4, display: "block" }}>
-            Suggestions from your ratings (TMDB)
-          </span>
-        )}
-        {loading && (
-          <span style={{ fontSize: 11, color: "#444", fontFamily: FF.sans, marginTop: 4, display: "block" }}>
-            Loading picks…
-          </span>
-        )}
-      </span>
-    </button>
+          {titleBlock}
+        </button>
+      ) : (
+        titleBlock
+      )}
+      {refreshBtn}
+      </div>
+    </div>
   );
 
   if (loading) {
     return (
       <section style={{ margin: "0 0 28px", padding: "18px 0", borderBottom: "1px solid #141414" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          {headerButton}
-          {refreshBtn}
-        </div>
-        {expanded && (
-          <p style={{ fontSize: 11, color: "#444", fontFamily: FF.mono, letterSpacing: "0.12em", margin: "12px 0 0 24px" }}>
+        {headerRow}
+        {contentVisible && (
+          <p
+            style={{
+              fontSize: 11,
+              color: "#444",
+              fontFamily: FF.mono,
+              letterSpacing: "0.12em",
+              margin: isPage ? "12px 0 0 0" : "12px 0 0 24px",
+            }}
+          >
             …
           </p>
         )}
@@ -288,12 +309,17 @@ export default function RecommendationsRow({ variant = "inline" }) {
   if (!hasAny) {
     return (
       <section style={{ margin: "0 0 28px", padding: "18px 0", borderBottom: "1px solid #141414" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          {headerButton}
-          {refreshBtn}
-        </div>
-        {expanded && (
-          <p style={{ fontSize: 13, color: "#555", margin: "12px 0 0 24px", maxWidth: 520, lineHeight: 1.5 }}>
+        {headerRow}
+        {contentVisible && (
+          <p
+            style={{
+              fontSize: 13,
+              color: "#555",
+              margin: isPage ? "12px 0 0 0" : "12px 0 0 24px",
+              maxWidth: 520,
+              lineHeight: 1.5,
+            }}
+          >
             {reason || "Rate a few titles (with TMDB linked) to see movie and series picks from The Movie Database."}
           </p>
         )}
@@ -304,15 +330,12 @@ export default function RecommendationsRow({ variant = "inline" }) {
   return (
     <section style={{ margin: "0 0 28px", padding: "18px 0", borderBottom: "1px solid #141414" }}>
       {modalItem && <RecommendationDetailModal item={modalItem} onClose={() => setModalItem(null)} />}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: expanded ? 10 : 0 }}>
-        {headerButton}
-        {refreshBtn}
-      </div>
+      {headerRow}
 
-      {expanded && (
+      {contentVisible && (
         <>
           {algorithm && (
-            <div style={{ marginBottom: 14, marginLeft: 24 }}>
+            <div style={{ marginBottom: 14, marginLeft: isPage ? 0 : 24 }}>
               <button
                 type="button"
                 onClick={() => setShowHow((v) => !v)}
@@ -357,7 +380,7 @@ export default function RecommendationsRow({ variant = "inline" }) {
             <div style={{ marginBottom: tvItems.length > 0 ? 18 : 0 }}>
               <h3
                 style={{
-                  margin: "0 0 10px 24px",
+                  margin: isPage ? "0 0 10px 0" : "0 0 10px 24px",
                   fontSize: 9,
                   letterSpacing: "0.18em",
                   fontFamily: FF.mono,
@@ -375,7 +398,7 @@ export default function RecommendationsRow({ variant = "inline" }) {
             <div>
               <h3
                 style={{
-                  margin: "0 0 10px 24px",
+                  margin: isPage ? "0 0 10px 0" : "0 0 10px 24px",
                   fontSize: 9,
                   letterSpacing: "0.18em",
                   fontFamily: FF.mono,

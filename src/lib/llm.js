@@ -336,3 +336,72 @@ export async function generateProfileInsights({ stats, weekKey, monthKey, displa
   }
   return normalized;
 }
+
+const FOR_YOU_REORDER_SYSTEM = `You are "Mr Potato" helping diversify a "For you" shelf. Output ONLY valid JSON, no markdown fences.
+Shape: {"order":[ ... ]}
+The "order" array must contain exactly K distinct integers. Each integer must be between 0 and N-1 inclusive (N = number of candidate lines, 0-indexed).
+Pick an order that feels varied (mix eras/genres/moods suggested by titles) — not alphabetical, not the same as the input order.`;
+
+/**
+ * Ask Llama (Groq or Ollama) to pick which candidates surface first. Indices must stay within the provided list.
+ * @param {number} nCandidates N
+ * @param {string} linesText lines like "0. Some Title (2020)"
+ * @param {number} [k] defaults to 12
+ * @returns {Promise<number[] | null>}
+ */
+export async function reorderForYouIndices(nCandidates, linesText, k = 12) {
+  if (!llmConfigured() || nCandidates < k || k < 1) return null;
+  const N = nCandidates;
+  const user = `There are exactly N=${N} candidates with indices 0 through ${N - 1}.
+
+${linesText}
+
+Return JSON: {"order":[ ... ]} with exactly ${k} distinct integers, each from 0 to ${N - 1}.`;
+
+  const provider = (process.env.LLM_PROVIDER || "groq").toLowerCase();
+  let raw;
+  try {
+    if (provider === "ollama") {
+      raw = await runOllamaJsonCompletion(FOR_YOU_REORDER_SYSTEM, user, 0.88);
+    } else {
+      const apiKey = process.env.GROQ_API_KEY;
+      if (!apiKey) return null;
+      const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: FOR_YOU_REORDER_SYSTEM },
+            { role: "user", content: user },
+          ],
+          temperature: 0.88,
+          max_tokens: 400,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return null;
+      raw = String(data?.choices?.[0]?.message?.content || "").trim();
+    }
+  } catch {
+    return null;
+  }
+
+  const parsed = parseJsonObject(raw);
+  if (!parsed || !Array.isArray(parsed.order)) return null;
+  const order = parsed.order.map((x) => Number(x)).filter((x) => Number.isInteger(x) && x >= 0 && x < N);
+  const seen = new Set();
+  const out = [];
+  for (const idx of order) {
+    if (seen.has(idx)) continue;
+    seen.add(idx);
+    out.push(idx);
+    if (out.length >= k) break;
+  }
+  if (out.length < k) return null;
+  return out;
+}

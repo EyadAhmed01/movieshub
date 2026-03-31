@@ -148,16 +148,18 @@ export async function fetchTvByTmdbId(tmdbId, options = {}) {
   };
 }
 
-export async function fetchMovieSimilarAndRecommended(tmdbId) {
+/**
+ * @param {number} tmdbId
+ * @param {{ page?: number, noStore?: boolean }} [options] page 1–5; noStore avoids Next fetch cache so refreshes get new TMDB pages.
+ */
+export async function fetchMovieSimilarAndRecommended(tmdbId, options = {}) {
   const apiKey = key();
   if (!apiKey) return { similar: [], recommended: [] };
+  const page = Math.min(5, Math.max(1, Number(options.page) || 1));
+  const fetchInit = options.noStore ? { cache: "no-store" } : { next: { revalidate: 3600 } };
   const [simRes, recRes] = await Promise.all([
-    fetch(`${BASE}/movie/${tmdbId}/similar?api_key=${apiKey}&page=1`, {
-      next: { revalidate: 3600 },
-    }),
-    fetch(`${BASE}/movie/${tmdbId}/recommendations?api_key=${apiKey}&page=1`, {
-      next: { revalidate: 3600 },
-    }),
+    fetch(`${BASE}/movie/${tmdbId}/similar?api_key=${apiKey}&page=${page}`, fetchInit),
+    fetch(`${BASE}/movie/${tmdbId}/recommendations?api_key=${apiKey}&page=${page}`, fetchInit),
   ]);
   const parse = async (res) => {
     if (!res.ok) return [];
@@ -178,16 +180,18 @@ export async function fetchMovieSimilarAndRecommended(tmdbId) {
   return { similar, recommended };
 }
 
-export async function fetchTvSimilarAndRecommended(tmdbId) {
+/**
+ * @param {number} tmdbId
+ * @param {{ page?: number, noStore?: boolean }} [options]
+ */
+export async function fetchTvSimilarAndRecommended(tmdbId, options = {}) {
   const apiKey = key();
   if (!apiKey) return { similar: [], recommended: [] };
+  const page = Math.min(5, Math.max(1, Number(options.page) || 1));
+  const fetchInit = options.noStore ? { cache: "no-store" } : { next: { revalidate: 3600 } };
   const [simRes, recRes] = await Promise.all([
-    fetch(`${BASE}/tv/${tmdbId}/similar?api_key=${apiKey}&page=1`, {
-      next: { revalidate: 3600 },
-    }),
-    fetch(`${BASE}/tv/${tmdbId}/recommendations?api_key=${apiKey}&page=1`, {
-      next: { revalidate: 3600 },
-    }),
+    fetch(`${BASE}/tv/${tmdbId}/similar?api_key=${apiKey}&page=${page}`, fetchInit),
+    fetch(`${BASE}/tv/${tmdbId}/recommendations?api_key=${apiKey}&page=${page}`, fetchInit),
   ]);
   const parse = async (res) => {
     if (!res.ok) return [];

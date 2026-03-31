@@ -27,8 +27,9 @@ export default function ForYouPage() {
       >
         For you
       </h2>
-      <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6a6a6a", fontFamily: "var(--font-sans), system-ui, sans-serif" }}>
-        Picks from your ratings refresh when you change a score or use Refresh picks.
+      <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6a6a6a", fontFamily: "var(--font-sans), system-ui, sans-serif", lineHeight: 1.5 }}>
+        Each Refresh picks run uses a new mix (TMDB pages and shuffled seeds from your ratings). If Groq or Ollama is configured, Mr Potato can
+        reorder candidates for extra variety.
       </p>
       <RecommendationsRow variant="page" />
     </div>

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { FF } from "@/lib/fonts";
 import BrandLogo from "@/components/BrandLogo";
 
-const field = {
+const fieldBase = {
   background: "#0f0f0f",
   border: "1px solid #2a2a2a",
   color: "#e8e0d0",
@@ -17,7 +17,15 @@ const field = {
   outline: "none",
   width: "100%",
   letterSpacing: "0.02em",
+  boxSizing: "border-box",
+  borderRadius: 6,
+  transition: "border-color 0.15s ease, box-shadow 0.15s ease",
 };
+
+function emailLooksValid(s) {
+  const t = s.trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -26,10 +34,19 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({ email: "", password: "" });
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    const next = { email: "", password: "" };
+    if (!email.trim()) next.email = "Enter your email.";
+    else if (!emailLooksValid(email)) next.email = "That doesn't look like a valid email.";
+    if (!password) next.password = "Choose a password.";
+    else if (password.length < 8) next.password = "Use at least 8 characters.";
+    setFieldErrors(next);
+    if (next.email || next.password) return;
+
     setPending(true);
     const res = await fetch("/api/signup", {
       method: "POST",
@@ -110,36 +127,82 @@ export default function SignupPage() {
         >
           Create account
         </h1>
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <input
-            type="text"
-            autoComplete="name"
-            placeholder="Name (optional)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            style={field}
-          />
-          <input
-            type="email"
-            autoComplete="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={field}
-            required
-          />
-          <input
-            type="password"
-            autoComplete="new-password"
-            placeholder="Password (min 8 characters)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={field}
-            minLength={8}
-            required
-          />
+        <form noValidate onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div>
+            <input
+              type="text"
+              autoComplete="name"
+              placeholder="Name (optional)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={fieldBase}
+            />
+          </div>
+          <div>
+            <input
+              id="signup-email"
+              type="email"
+              autoComplete="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (fieldErrors.email) setFieldErrors((f) => ({ ...f, email: "" }));
+              }}
+              aria-invalid={Boolean(fieldErrors.email)}
+              aria-describedby={fieldErrors.email ? "signup-email-err" : undefined}
+              style={{
+                ...fieldBase,
+                borderColor: fieldErrors.email ? "#9a3038" : fieldBase.border,
+                boxShadow: fieldErrors.email ? "0 0 0 2px rgba(229, 9, 20, 0.2)" : "none",
+              }}
+            />
+            {fieldErrors.email ? (
+              <p id="signup-email-err" role="alert" style={{ margin: "8px 0 0", fontSize: 13, color: "#e07070", fontFamily: FF.sans, lineHeight: 1.4 }}>
+                {fieldErrors.email}
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <input
+              id="signup-password"
+              type="password"
+              autoComplete="new-password"
+              placeholder="Password (min 8 characters)"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (fieldErrors.password) setFieldErrors((f) => ({ ...f, password: "" }));
+              }}
+              aria-invalid={Boolean(fieldErrors.password)}
+              aria-describedby={fieldErrors.password ? "signup-password-err" : undefined}
+              style={{
+                ...fieldBase,
+                borderColor: fieldErrors.password ? "#9a3038" : fieldBase.border,
+                boxShadow: fieldErrors.password ? "0 0 0 2px rgba(229, 9, 20, 0.2)" : "none",
+              }}
+            />
+            {fieldErrors.password ? (
+              <p id="signup-password-err" role="alert" style={{ margin: "8px 0 0", fontSize: 13, color: "#e07070", fontFamily: FF.sans, lineHeight: 1.4 }}>
+                {fieldErrors.password}
+              </p>
+            ) : null}
+          </div>
           {error && (
-            <p style={{ color: "#e50914", fontSize: 14, fontFamily: FF.sans, margin: 0, lineHeight: 1.4 }}>
+            <p
+              role="alert"
+              style={{
+                color: "#e50914",
+                fontSize: 14,
+                fontFamily: FF.sans,
+                margin: 0,
+                lineHeight: 1.4,
+                padding: "12px 14px",
+                background: "rgba(229, 9, 20, 0.08)",
+                border: "1px solid rgba(229, 9, 20, 0.35)",
+                borderRadius: 8,
+              }}
+            >
               {error}
             </p>
           )}
