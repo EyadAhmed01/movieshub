@@ -14,9 +14,9 @@ import BadgeInfoModal from "@/components/BadgeInfoModal";
 const TMDB_IMG = "https://image.tmdb.org/t/p/w92";
 /** Sharper posters in library rows (not TMDB hint thumbnails). */
 const TMDB_POSTER_ROW = "https://image.tmdb.org/t/p/w185";
-const ROW_POSTER_IMG_W = 64;
-const ROW_POSTER_IMG_H = 96;
-const ROW_POSTER_WRAP_W = 72;
+const ROW_POSTER_IMG_W = 84;
+const ROW_POSTER_IMG_H = 126;
+const ROW_POSTER_WRAP_W = 96;
 
 const YEARS = Array.from({ length: 2026 - 1950 + 1 }, (_, i) => 2026 - i);
 
@@ -217,8 +217,8 @@ function TmdbHints({
             style={{
               borderBottom: "1px solid #1a1a1a",
               display: "flex",
-              alignItems: "center",
-              gap: 10,
+              alignItems: "flex-start",
+              gap: 12,
               padding: "8px 10px",
             }}
           >
@@ -229,12 +229,12 @@ function TmdbHints({
                 onOpenDetail?.(r);
               }}
               style={{
-                flex: 1,
+                flex: "1 1 0%",
                 minWidth: 0,
                 textAlign: "left",
                 display: "flex",
                 gap: 10,
-                alignItems: "center",
+                alignItems: "flex-start",
                 padding: 0,
                 border: "none",
                 background: "transparent",
@@ -246,9 +246,23 @@ function TmdbHints({
             >
               {r.posterPath && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={posterSrc(r.posterPath)} alt="" width={36} height={54} style={{ objectFit: "cover", borderRadius: 4 }} />
+                <img
+                  src={posterSrc(r.posterPath)}
+                  alt=""
+                  width={36}
+                  height={54}
+                  style={{ objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
+                />
               )}
-              <span style={{ flex: 1, lineHeight: 1.35, minWidth: 0 }}>
+              <span
+                style={{
+                  flex: "1 1 0%",
+                  minWidth: 0,
+                  lineHeight: 1.35,
+                  overflowWrap: "anywhere",
+                  wordBreak: "break-word",
+                }}
+              >
                 {r.title}
                 {r.year != null && <span style={{ color: "#8a8580", marginLeft: 8 }}>({r.year})</span>}
                 {typeof r.voteAverage === "number" && (
@@ -263,8 +277,10 @@ function TmdbHints({
                   flexDirection: "column",
                   alignItems: "flex-end",
                   gap: 6,
-                  flexShrink: 0,
+                  flex: "0 0 auto",
                   maxWidth: 132,
+                  alignSelf: "flex-start",
+                  paddingTop: 2,
                 }}
               >
                 {lib ? (
@@ -624,7 +640,7 @@ function AddForm({
 const colLabel = (label, right) => (
   <span
     style={{
-      fontSize: 10,
+      fontSize: 11,
       color: "#4a4a4a",
       letterSpacing: "0.12em",
       fontFamily: FF.mono,
@@ -643,7 +659,7 @@ const colLabelYou = () => (
       flexDirection: "column",
       alignItems: "flex-end",
       gap: 2,
-      fontSize: 10,
+      fontSize: 11,
       color: "#4a4a4a",
       letterSpacing: "0.12em",
       fontFamily: FF.mono,
@@ -652,7 +668,7 @@ const colLabelYou = () => (
     }}
   >
     <span>YOU</span>
-    <span style={{ fontSize: 8, letterSpacing: "0.1em", color: "#3a3a3a" }}>/10</span>
+    <span style={{ fontSize: 9, letterSpacing: "0.1em", color: "#3a3a3a" }}>/10</span>
   </span>
 );
 
@@ -1300,27 +1316,13 @@ export default function HomeTracker() {
                       />
                     )}
                   </div>
-                  <span style={{ fontSize: 10, color: "#3a3a3a", fontFamily: FF.mono, fontWeight: 500 }}>
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span
-                    title={m.overview || m.title}
-                    style={{
-                      fontSize: 14,
-                      fontFamily: FF.sans,
-                      fontWeight: 400,
-                      color: "#d8d4cc",
-                      lineHeight: 1.45,
-                      paddingRight: 8,
-                    }}
-                  >
+                  <span className="tracker-row-idx">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="tracker-row-title" title={m.overview || m.title}>
                     {m.title}
                   </span>
-                  <span style={{ fontSize: 11, color: "#555", fontFamily: FF.mono, textAlign: "right" }}>
-                    {m.year}
-                  </span>
+                  <span className="tracker-row-meta tracker-row-meta--right">{m.year}</span>
                   <RatingOutOfTen value={m.userRating || 0} onChange={(v) => setMovieRating(m.id, v)} />
-                  <span style={{ fontSize: 10, color: "#444", fontFamily: FF.mono, textAlign: "right" }}>
+                  <span className="tracker-row-tmdb">
                     {m.voteAverage != null ? m.voteAverage.toFixed(1) : "—"}
                   </span>
                   <button
@@ -1454,37 +1456,19 @@ export default function HomeTracker() {
                       />
                     )}
                   </div>
-                  <span style={{ fontSize: 10, color: "#3a3a3a", fontFamily: FF.mono, fontWeight: 500 }}>
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span
-                    title={s.overview || s.title}
-                    style={{
-                      fontSize: 14,
-                      fontFamily: FF.sans,
-                      fontWeight: 400,
-                      color: "#d8d4cc",
-                      lineHeight: 1.45,
-                      paddingRight: 8,
-                    }}
-                  >
+                  <span className="tracker-row-idx">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="tracker-row-title" title={s.overview || s.title}>
                     {s.title}
                   </span>
-                  <span style={{ fontSize: 11, color: "#555", fontFamily: FF.mono, textAlign: "right" }}>
-                    {s.years}
-                  </span>
+                  <span className="tracker-row-meta tracker-row-meta--right">{s.years}</span>
                   <span
-                    style={{
-                      fontSize: 11,
-                      color: s.eps ? "#777" : "#252525",
-                      fontFamily: FF.mono,
-                      textAlign: "right",
-                    }}
+                    className="tracker-row-meta tracker-row-meta--right"
+                    style={{ color: s.eps ? "#777" : "#252525" }}
                   >
                     {s.eps ?? "—"}
                   </span>
                   <RatingOutOfTen value={s.userRating || 0} onChange={(v) => setSeriesRating(s.id, v)} />
-                  <span style={{ fontSize: 10, color: "#444", fontFamily: FF.mono, textAlign: "right" }}>
+                  <span className="tracker-row-tmdb">
                     {s.voteAverage != null ? s.voteAverage.toFixed(1) : "—"}
                   </span>
                   <button

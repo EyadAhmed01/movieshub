@@ -78,25 +78,26 @@ export async function GET() {
     for (const x of recommended) bump(x, w * 1.6);
   }
 
-  let list = [...scored.values()].map(({ score, item }) => ({ ...item, _score: score }));
+  const list = [...scored.values()].map(({ score, item }) => ({ ...item, _score: score }));
   list.sort((a, b) => b._score - a._score);
-  list = list.slice(0, 18);
-  const items = list.map(({ _score, ...rest }) => rest);
+  const stripScore = ({ _score, ...rest }) => rest;
+  const movieItems = list.filter((x) => x.mediaType === "movie").map(stripScore).slice(0, 12);
+  const tvItems = list.filter((x) => x.mediaType === "tv").map(stripScore).slice(0, 12);
 
   const algorithm = {
     name: "TMDB graph blend (rule-based, not a trained ML model)",
     summary:
-      "We take your highest-rated TMDB-linked movies and series, ask TMDB for similar and recommended titles for each, merge and dedupe, remove anything already in your library, then rank by a simple score (recommendations count slightly more than similar; higher your rating on a seed title, the more weight its suggestions get).",
+      "We take your highest-rated TMDB-linked movies and series, ask TMDB for similar and recommended titles for each, merge and dedupe, remove anything already in your library, then rank by a simple score (recommendations count slightly more than similar; higher your rating on a seed title, the more weight its suggestions get). Movies and series are returned as separate lists so you always see both when TMDB returns picks for each.",
     mlNote:
       "This is collaborative filtering–adjacent metadata from TMDB, not a neural recommender. For a “real” ML model you’d typically learn embeddings from many users (matrix factorization, two-tower models) or fine-tune on click/rating logs; that needs a dataset + training pipeline beyond this stack.",
     steps: [
       "Pick up to 6 rated movies and 4 rated series (by your score).",
-      "For each seed, fetch TMDB /similar and /recommendations.",
+      "For each seed, fetch TMDB /similar and /recommendations (movies and TV use separate endpoints).",
       "Weight contributions by your rating on that seed.",
       "Drop titles already in your library (same TMDB id + media type).",
-      "Sort by combined score and return the top ~18.",
+      "Sort by combined score, then take the top movies and top series separately (up to 12 each).",
     ],
   };
 
-  return NextResponse.json({ items, algorithm });
+  return NextResponse.json({ movieItems, tvItems, algorithm });
 }

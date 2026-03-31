@@ -1,5 +1,6 @@
 import { DM_Sans, JetBrains_Mono, Libre_Baskerville } from "next/font/google";
 import { Providers } from "@/components/Providers";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -26,12 +27,23 @@ const libreBaskerville = Libre_Baskerville({
 export const metadata = {
   title: "Viewing history",
   description: "Movies and series you watched — with ratings and TMDB info",
+  applicationName: "Viewing history",
+  appleWebApp: {
+    capable: true,
+    title: "Viewing history",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/icon-192.png",
+  },
 };
 
 export const viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#1a1a20",
 };
 
 export default function RootLayout({ children }) {
@@ -41,6 +53,7 @@ export default function RootLayout({ children }) {
       className={`${dmSans.variable} ${jetbrainsMono.variable} ${libreBaskerville.variable}`}
     >
       <body className="app-body">
+        <ServiceWorkerRegister />
         <Providers>{children}</Providers>
       </body>
     </html>
