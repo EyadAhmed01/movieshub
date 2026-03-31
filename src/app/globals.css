@@ -981,7 +981,7 @@ button.rec-card-link:hover {
   padding: 8px 12px 10px;
   max-width: 1240px;
   margin: 0 auto;
-  min-height: 52px;
+  min-height: 56px;
   box-sizing: border-box;
 }
 
@@ -1074,14 +1074,17 @@ button.rec-card-link:hover {
 
 .app-top-bar__logo {
   display: block;
-  border-radius: 12px;
+  border-radius: 14px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
 }
 
 /* Shared brand mark (BrandLogo: PNG with SVG fallback) */
 .rp-brand-logo {
   display: block;
-  border-radius: 12px;
+  border-radius: 14px;
   flex-shrink: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .rp-brand-logo--spin {
@@ -1221,22 +1224,22 @@ button.rec-card-link:hover {
   min-width: 0;
 }
 
-/* Space below fixed header (taller on mobile — two bar rows) */
+/* Space below fixed header (taller on mobile — two bar rows; sync with logo + bar padding) */
 .app-main-pad {
   box-sizing: border-box;
-  padding-top: calc(58px + env(safe-area-inset-top, 0px));
+  padding-top: calc(72px + env(safe-area-inset-top, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @media (max-width: 639px) {
   .app-main-pad {
-    padding-top: calc(120px + env(safe-area-inset-top, 0px));
+    padding-top: calc(132px + env(safe-area-inset-top, 0px));
   }
 }
 
 .app-top-bar__menu-btn {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   border: 1px solid #3a3a3a;
   border-radius: 10px;
   background: #141414;

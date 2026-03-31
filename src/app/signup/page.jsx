@@ -78,7 +78,7 @@ export default function SignupPage() {
     >
       <div style={{ width: "100%", maxWidth: 400 }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
-          <BrandLogo size={72} alt="Rotten Potatoes" />
+          <BrandLogo size={84} alt="Rotten Potatoes" />
         </div>
         <p
           style={{

@@ -571,7 +571,7 @@ export default function HomeTracker() {
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-          <BrandLogo size={56} spinning alt="" />
+          <BrandLogo size={72} spinning alt="" />
           <p style={{ color: "#444", fontFamily: FF.mono, fontSize: 11, letterSpacing: "0.18em", fontWeight: 500, margin: 0 }}>
             LOADING…
           </p>

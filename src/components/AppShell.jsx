@@ -163,7 +163,7 @@ function AppShellInner({ children }) {
               <span className="app-top-bar__menu-icon" aria-hidden />
             </button>
             <Link href="/" className="app-top-bar__logo-link" aria-label="Home">
-              <BrandLogo size={36} className="app-top-bar__logo" alt="" />
+              <BrandLogo size={52} className="app-top-bar__logo" alt="" />
             </Link>
             {profileCard?.preferences?.showBadgesOnHome !== false && profileCard?.watchSummary?.currentBadge && (
               <button

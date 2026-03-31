@@ -105,7 +105,7 @@ export default function NetflixImportPanel({ onImported }) {
       {busy && (
         <div className="csv-import-loading-overlay" role="status" aria-live="polite" aria-busy="true">
           <div className="csv-import-loading-card">
-            <BrandLogo size={80} spinning alt="" />
+            <BrandLogo size={96} spinning alt="" />
             <p className="csv-import-loading-title">Importing your CSV</p>
             <p className="csv-import-loading-sub">Matching titles to TMDB — keep this tab open</p>
             {importBatch > 0 && (
