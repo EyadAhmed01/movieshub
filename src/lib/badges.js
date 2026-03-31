@@ -34,3 +34,12 @@ export function getCurrentBadge(totalMinutes) {
   }
   return current;
 }
+
+/** Next tier above current watch time, or null if already at max. */
+export function getNextBadge(totalMinutes) {
+  const m = Math.max(0, Number(totalMinutes) || 0);
+  for (const b of WATCH_BADGES) {
+    if (b.minMinutes > m) return b;
+  }
+  return null;
+}

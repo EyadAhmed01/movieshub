@@ -1,14 +1,5 @@
 export const WTW_MOODS = ["Very sad", "Sad", "Neutral", "Happy", "Very happy"];
 
-/** Shown on buttons; API / LLM still receive the English mood string. */
-export const WTW_MOOD_EMOJI = {
-  "Very sad": "😫",
-  Sad: "☹️",
-  Neutral: "😐",
-  Happy: "🙂",
-  "Very happy": "🤩",
-};
-
 export const WTW_GENRES = [
   "Action",
   "Comedy",

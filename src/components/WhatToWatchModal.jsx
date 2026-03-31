@@ -106,7 +106,7 @@ export default function WhatToWatchModal({ onClose, onAddedToWatchlist }) {
             What to watch?
           </h2>
           <p style={{ margin: "0 0 22px", fontSize: 12, color: "#6a6a6a", lineHeight: 1.5 }}>
-            Pick mood (emoji), genre, format, and tone. Reel Llama suggests one title; we match it on TMDB.
+            Pick mood, genre, format, and tone. Reel Llama suggests one title; we match it on TMDB.
           </p>
           <WhatToWatchContent onAddedToWatchlist={onAddedToWatchlist} />
         </div>

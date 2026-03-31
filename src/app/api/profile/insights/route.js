@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentBadge } from "@/lib/badges";
 import {
   buildLibraryStatsPayload,
+  buildTasteAnchorLists,
   currentIsoWeekKey,
   currentMonthKey,
 } from "@/lib/libraryStats";
@@ -69,6 +70,7 @@ export async function GET(req) {
   }
 
   const stats = buildLibraryStatsPayload(movies, series);
+  const tasteAnchors = buildTasteAnchorLists(movies, series);
   const currentBadge = getCurrentBadge(stats.totalMinutesWatched);
   const weekKey = currentIsoWeekKey();
   const monthKey = currentMonthKey();
@@ -130,7 +132,7 @@ export async function GET(req) {
 
   try {
     const generated = await generateProfileInsights({
-      stats,
+      stats: { ...stats, tasteAnchors },
       weekKey,
       monthKey,
       displayName: user.name,

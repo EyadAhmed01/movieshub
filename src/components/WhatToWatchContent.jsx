@@ -1,15 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { FF } from "@/lib/fonts";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  WTW_FORMATS,
-  WTW_GENRES,
-  WTW_LABELS,
-  WTW_MOOD_EMOJI,
-  WTW_MOODS,
-  WTW_TONES,
-} from "@/lib/whatToWatchChoices";
+  faFaceFrown,
+  faFaceGrinStars,
+  faFaceMeh,
+  faFaceSadTear,
+  faFaceSmile,
+} from "@fortawesome/free-solid-svg-icons";
+import { FF } from "@/lib/fonts";
+import { WTW_FORMATS, WTW_GENRES, WTW_LABELS, WTW_MOODS, WTW_TONES } from "@/lib/whatToWatchChoices";
+
+/** Font Awesome solid icons — same 1–5 mood scale as before (API still gets English mood strings). */
+const WTW_MOOD_ICONS = {
+  "Very sad": faFaceSadTear,
+  Sad: faFaceFrown,
+  Neutral: faFaceMeh,
+  Happy: faFaceSmile,
+  "Very happy": faFaceGrinStars,
+};
 
 function ChoiceRow({ label, options, value, onChange }) {
   return (
@@ -68,28 +78,39 @@ function MoodRow({ value, onChange }) {
         {WTW_LABELS.mood}
       </p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-        {WTW_MOODS.map((opt) => (
-          <button
-            key={opt}
-            type="button"
-            title={opt}
-            aria-label={opt}
-            onClick={() => onChange(opt)}
-            className={`wtw-choice ${value === opt ? "wtw-choice--on" : ""}`}
-            style={{
-              background: value === opt ? "rgba(200,196,186,0.12)" : "#141414",
-              border: `1px solid ${value === opt ? "#5a5650" : "#2a2a2a"}`,
-              borderRadius: 10,
-              color: "#f5f0e8",
-              padding: "12px 16px",
-              fontSize: 28,
-              lineHeight: 1,
-              cursor: "pointer",
-            }}
-          >
-            {WTW_MOOD_EMOJI[opt] ?? opt}
-          </button>
-        ))}
+        {WTW_MOODS.map((opt) => {
+          const icon = WTW_MOOD_ICONS[opt];
+          return (
+            <button
+              key={opt}
+              type="button"
+              title={opt}
+              aria-label={opt}
+              onClick={() => onChange(opt)}
+              className={`wtw-choice ${value === opt ? "wtw-choice--on" : ""}`}
+              style={{
+                background: value === opt ? "rgba(200,196,186,0.12)" : "#141414",
+                border: `1px solid ${value === opt ? "#5a5650" : "#2a2a2a"}`,
+                borderRadius: 10,
+                color: value === opt ? "#f5f0e8" : "#b8b0a4",
+                padding: "14px 18px",
+                lineHeight: 1,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minWidth: 52,
+                minHeight: 52,
+              }}
+            >
+              {icon ? (
+                <FontAwesomeIcon icon={icon} style={{ width: 28, height: 28 }} />
+              ) : (
+                opt
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

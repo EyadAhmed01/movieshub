@@ -9,10 +9,33 @@ import NetflixImportPanel from "@/components/NetflixImportPanel";
 import RecommendationsRow from "@/components/RecommendationsRow";
 import WhatToWatchModal from "@/components/WhatToWatchModal";
 import RecommendationDetailModal from "@/components/RecommendationDetailModal";
+import BadgeInfoModal from "@/components/BadgeInfoModal";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w92";
 
 const YEARS = Array.from({ length: 2026 - 1950 + 1 }, (_, i) => 2026 - i);
+
+/** Toolbar nav: one readable sans style (no mono caps). */
+const toolbarNavLink = {
+  fontSize: 14,
+  fontFamily: FF.sans,
+  fontWeight: 600,
+  letterSpacing: "0.01em",
+  color: "#ece8e0",
+  textDecoration: "none",
+  border: "1px solid #4d4d4d",
+  padding: "12px 18px",
+  borderRadius: 8,
+  whiteSpace: "nowrap",
+  lineHeight: 1.3,
+  transition: "border-color 0.15s ease, color 0.15s ease, background 0.15s ease",
+};
+
+const toolbarNavButton = {
+  ...toolbarNavLink,
+  background: "transparent",
+  cursor: "pointer",
+};
 
 function posterSrc(posterPath) {
   if (!posterPath) return null;
@@ -637,6 +660,7 @@ export default function HomeTracker() {
   const [searchDetailModal, setSearchDetailModal] = useState(null);
   const [quickAddBusyTmdbId, setQuickAddBusyTmdbId] = useState(null);
   const [profileCard, setProfileCard] = useState(null);
+  const [badgeModalOpen, setBadgeModalOpen] = useState(false);
 
   const showFlash = useCallback((msg) => {
     setFlash(msg);
@@ -795,6 +819,12 @@ export default function HomeTracker() {
   return (
     <div className="tracker-page-animate" style={{ minHeight: "100vh", background: "#0a0a0a", fontFamily: FF.sans, color: "#e8e0d0" }}>
       {wtwOpen && <WhatToWatchModal onClose={() => setWtwOpen(false)} />}
+      <BadgeInfoModal
+        open={badgeModalOpen}
+        onClose={() => setBadgeModalOpen(false)}
+        badge={profileCard?.watchSummary?.currentBadge}
+        totalMinutes={profileCard?.watchSummary?.totalMinutes}
+      />
       {searchDetailModal && (
         <RecommendationDetailModal item={searchDetailModal} onClose={() => setSearchDetailModal(null)} />
       )}
@@ -843,14 +873,14 @@ export default function HomeTracker() {
                 All Titles
               </h1>
             </div>
-            <div className="tracker-user-bar" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+            <div className="tracker-user-bar" style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
               <span
                 style={{
-                  fontSize: 12,
-                  color: "#6a6a6a",
+                  fontSize: 14,
+                  color: "#9a958c",
                   fontFamily: FF.sans,
                   fontWeight: 500,
-                  maxWidth: 240,
+                  maxWidth: 280,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -863,17 +893,9 @@ export default function HomeTracker() {
                 type="button"
                 onClick={() => signOut({ callbackUrl: "/login" })}
                 style={{
-                  background: "none",
-                  border: "1px solid #333",
-                  borderRadius: 6,
-                  color: "#9a9a9a",
-                  padding: "8px 14px",
-                  fontSize: 11,
-                  fontFamily: FF.mono,
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  letterSpacing: "0.08em",
-                  transition: "color 0.15s ease, border-color 0.15s ease, background 0.15s ease",
+                  ...toolbarNavButton,
+                  color: "#b8b3a8",
+                  border: "1px solid #4d4d4d",
                 }}
               >
                 Sign out
@@ -882,123 +904,72 @@ export default function HomeTracker() {
           </div>
           <div className="tracker-toolbar">
             <div className="tracker-toolbar-inner">
-              <Link
-                href="/watchlist"
-                style={{
-                  fontSize: 12,
-                  fontFamily: FF.sans,
-                  fontWeight: 500,
-                  letterSpacing: "0.02em",
-                  color: "#c8c4ba",
-                  textDecoration: "none",
-                  border: "1px solid #444",
-                  padding: "8px 14px",
-                  borderRadius: 6,
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <Link href="/watchlist" style={toolbarNavLink}>
                 Watch next
               </Link>
-              <button
-                type="button"
-                onClick={() => setWtwOpen(true)}
-                style={{
-                  fontSize: 12,
-                  fontFamily: FF.sans,
-                  fontWeight: 500,
-                  letterSpacing: "0.02em",
-                  color: "#c8c4ba",
-                  background: "transparent",
-                  border: "1px solid #444",
-                  padding: "8px 14px",
-                  borderRadius: 6,
-                  whiteSpace: "nowrap",
-                  cursor: "pointer",
-                }}
-              >
+              <button type="button" onClick={() => setWtwOpen(true)} style={toolbarNavButton}>
                 What to watch?
               </button>
-              <Link
-                href="/analytics"
-                style={{
-                  fontSize: 12,
-                  fontFamily: FF.sans,
-                  fontWeight: 500,
-                  letterSpacing: "0.02em",
-                  color: "#c8c4ba",
-                  textDecoration: "none",
-                  border: "1px solid #444",
-                  padding: "8px 14px",
-                  borderRadius: 6,
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <Link href="/analytics" style={toolbarNavLink}>
                 Analytics
               </Link>
-              <Link
-                href="/profile"
-                style={{
-                  fontSize: 12,
-                  fontFamily: FF.sans,
-                  fontWeight: 500,
-                  letterSpacing: "0.02em",
-                  color: "#c8c4ba",
-                  textDecoration: "none",
-                  border: "1px solid #444",
-                  padding: "8px 14px",
-                  borderRadius: 6,
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <Link href="/profile" style={toolbarNavLink}>
                 Profile
               </Link>
               {profileCard?.preferences?.showBadgesOnHome !== false && profileCard?.watchSummary?.currentBadge && (
-                <Link
-                  href="/profile"
-                  title="Your watch-time rank"
+                <button
+                  type="button"
+                  title="Your watch-time rank — click for details"
+                  onClick={() => setBadgeModalOpen(true)}
                   style={{
-                    fontSize: 10,
-                    fontFamily: FF.mono,
-                    letterSpacing: "0.1em",
-                    color: "#a08070",
-                    textDecoration: "none",
-                    border: "1px solid #3a3028",
-                    padding: "8px 12px",
-                    borderRadius: 6,
-                    whiteSpace: "nowrap",
-                    maxWidth: 200,
+                    ...toolbarNavLink,
+                    color: "#edd9c8",
+                    border: "1px solid #6b534a",
+                    background: "rgba(120, 72, 56, 0.2)",
+                    maxWidth: 260,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
+                    cursor: "pointer",
                   }}
                 >
                   {profileCard.watchSummary.currentBadge.title}
-                </Link>
+                </button>
               )}
-              <span style={{ fontSize: 10, color: "#3a3a3a", fontFamily: FF.mono, letterSpacing: "0.1em" }}>
-                ☁ saved to your account
+              <span
+                style={{
+                  fontSize: 13,
+                  color: "#8a8580",
+                  fontFamily: FF.sans,
+                  fontWeight: 500,
+                  letterSpacing: "0.02em",
+                  padding: "4px 0",
+                }}
+              >
+                Saved to your account
               </span>
               <div
                 className="tracker-search-input"
-                style={{ position: "relative", zIndex: 12, minWidth: 0, flex: 1, maxWidth: 360 }}
+                style={{ position: "relative", zIndex: 12, minWidth: 0, flex: 1, maxWidth: 440 }}
               >
                 <input
-                  placeholder="Search movies (TMDB) or filter your list…"
+                  placeholder="Search TMDB or filter your list…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   aria-label="Search movies and your library"
                   style={{
                     width: "100%",
                     boxSizing: "border-box",
-                    background: "#141414",
-                    border: "1px solid rgba(180, 20, 40, 0.9)",
+                    background: "#161616",
+                    border: "1px solid rgba(200, 50, 60, 0.55)",
                     borderRadius: 8,
-                    color: "#e8e0d0",
-                    padding: "10px 14px",
-                    fontSize: 13,
+                    color: "#f0ebe3",
+                    padding: "13px 16px",
+                    fontSize: 15,
                     fontFamily: FF.sans,
+                    fontWeight: 500,
                     outline: "none",
-                    letterSpacing: "0.02em",
-                    boxShadow: "0 0 0 1px rgba(90, 0, 0, 0.35)",
+                    letterSpacing: "0.01em",
+                    boxShadow: "none",
                   }}
                 />
                 <TmdbHints
@@ -1030,14 +1001,14 @@ export default function HomeTracker() {
                   background: "none",
                   border: "none",
                   borderBottom: filter === tab.key ? "2px solid #e50914" : "2px solid transparent",
-                  color: filter === tab.key ? "#f5f0e8" : "#555",
-                  padding: "10px 18px",
-                  fontSize: 11,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
+                  color: filter === tab.key ? "#f5f0e8" : "#6a6a6a",
+                  padding: "12px 20px",
+                  fontSize: 14,
+                  letterSpacing: "0.02em",
+                  textTransform: "none",
                   cursor: "pointer",
-                  fontFamily: FF.mono,
-                  fontWeight: filter === tab.key ? 500 : 400,
+                  fontFamily: FF.sans,
+                  fontWeight: filter === tab.key ? 600 : 500,
                   transition: "color 0.18s ease, border-color 0.18s ease",
                   marginBottom: -1,
                 }}

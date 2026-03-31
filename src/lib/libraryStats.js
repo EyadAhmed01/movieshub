@@ -115,6 +115,70 @@ export function buildLibraryStatsPayload(movies, series) {
   };
 }
 
+/**
+ * Titles the LLM must ground taste / blind spot / month / entry pick on.
+ * Uses top 10 by user rating when any exist; otherwise most recently logged watches.
+ * @param {import("@prisma/client").MovieEntry[]} movies
+ * @param {import("@prisma/client").SeriesEntry[]} series
+ */
+export function buildTasteAnchorLists(movies, series) {
+  const mList = movies || [];
+  const sList = series || [];
+
+  const compactMovie = (m, withRating) => {
+    const g = genreNamesFromJson(m.genres).slice(0, 5);
+    const o = { title: m.title, year: m.year, genres: g };
+    if (withRating && m.userRating != null && m.userRating > 0) {
+      o.yourRatingOutOf10 = m.userRating;
+    }
+    return o;
+  };
+
+  const compactSeries = (s, withRating) => {
+    const g = genreNamesFromJson(s.genres).slice(0, 5);
+    const o = { title: s.title, years: s.years, genres: g };
+    if (withRating && s.userRating != null && s.userRating > 0) {
+      o.yourRatingOutOf10 = s.userRating;
+    }
+    return o;
+  };
+
+  const ratedMovies = mList
+    .filter((m) => m.userRating != null && m.userRating > 0)
+    .sort((a, b) => b.userRating - a.userRating || b.year - a.year);
+  const ratedSeries = sList
+    .filter((s) => s.userRating != null && s.userRating > 0)
+    .sort((a, b) => b.userRating - a.userRating);
+
+  const recentMovies = [...mList].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const recentSeries = [...sList].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const useRatedMovies = ratedMovies.length > 0;
+  const useRatedSeries = ratedSeries.length > 0;
+
+  const moviesAnchors = (useRatedMovies ? ratedMovies : recentMovies)
+    .slice(0, 10)
+    .map((m) => compactMovie(m, useRatedMovies));
+  const seriesAnchors = (useRatedSeries ? ratedSeries : recentSeries)
+    .slice(0, 10)
+    .map((s) => compactSeries(s, useRatedSeries));
+
+  const movieLine = useRatedMovies
+    ? "Movies: top 10 by your rating (highest first)."
+    : "Movies: you have no ratings — these are your 10 most recently logged films.";
+  const seriesLine = useRatedSeries
+    ? "Series: top 10 by your rating (highest first)."
+    : "Series: you have no ratings — these are your 10 most recently logged shows.";
+
+  return {
+    movies: moviesAnchors,
+    series: seriesAnchors,
+    movieAnchorMode: useRatedMovies ? "top_rated" : "watched_recent",
+    seriesAnchorMode: useRatedSeries ? "top_rated" : "watched_recent",
+    instruction: `${movieLine} ${seriesLine} Ground taste summary, bullets, blind spot, stretch, entry pick, and symbolic month ONLY on these rows plus the numeric aggregates in stats. When naming favorites, use only titles from these lists.`,
+  };
+}
+
 /** ISO week key e.g. 2026-W13 (UTC). */
 export function currentIsoWeekKey(d = new Date()) {
   const target = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));

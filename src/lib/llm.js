@@ -245,17 +245,23 @@ export async function suggestWhatToWatch(choices) {
   };
 }
 
-const PROFILE_INSIGHT_SYSTEM = `You are Reel Llama, a witty film and TV buff. The user message is JSON: aggregate stats from ONE person's watch library. Output ONLY one JSON object. No markdown fences, no extra text.
+const PROFILE_INSIGHT_SYSTEM = `You are Reel Llama, a witty film and TV buff. The user message is JSON with aggregate stats PLUS "tasteAnchors": { movies, series, movieAnchorMode, seriesAnchorMode, instruction }.
+
+Output ONLY one JSON object. No markdown fences, no extra text.
 
 Required keys:
-- "tasteSummary": string, at most 2 short sentences, warm and specific to their patterns.
-- "patternBullets": array of 3-4 short strings (habits you infer: genres, eras, movies vs series balance, ratings if present).
-- "blindSpot": one sentence describing a plausible gap (e.g. pre-1980, non-English, documentary, short films) — grounded in what the stats show or don't show.
-- "stretchGoal": one sentence: a fun weekly "stretch" challenge tied to blindSpot.
-- "entryPick": object with "title" (real famous work), "mediaType" ("movie" or "tv"), "why" (one sentence entry-level pick for that gap).
-- "symbolicMonth": object with "name" (exactly one English calendar month: January…December), "tagline" (one funny PG line comparing their taste to that month), "whyChosen" (2 short sentences: why THAT month fits them for this rotation).
+- "tasteSummary": string, at most 2 short sentences. Must reflect patterns visible in tasteAnchors.movies and tasteAnchors.series (genres, years, mix of film vs TV). If displayName is set, you may use it once in tasteSummary or symbolicMonth.tagline only.
+- "patternBullets": array of 3-4 short strings. Each bullet should be justified by the anchor lists or aggregate stats (e.g. recurring genres from those titles, era clustering, ratings if yourRatingOutOf10 appears).
+- "blindSpot": one sentence: a real gap relative to what those anchors show (e.g. if everything is 2010s US drama, say so and name what's missing). Do not claim they watch something not implied by anchors+stats.
+- "stretchGoal": one sentence: a concrete weekly challenge tied to blindSpot.
+- "entryPick": object with "title" (real, famous work), "mediaType" ("movie" or "tv"), "why" (one sentence). The pick must address the blindSpot and MUST NOT duplicate any title in tasteAnchors.movies or tasteAnchors.series. Choose something outside their obvious cluster from the anchors.
+- "symbolicMonth": object with "name" (exactly one English calendar month January…December), "tagline" (one funny PG line), "whyChosen" (2 short sentences). The month choice must be metaphorically justified by the SAME patterns you inferred from the anchor lists (mood, era mix, genre energy) — not random, not defaulting to the current calendar month unless it truly fits.
 
-Rules: Use only the stats given; never invent specific titles they watched. If the library is tiny, stay encouraging and generic. All pick titles must be real.`;
+Hard rules:
+- When naming titles the user clearly enjoys or watches, use ONLY titles from tasteAnchors.movies or tasteAnchors.series (or paraphrase "your top picks" without new names).
+- Never invent ratings or titles they logged that are not in the anchors.
+- entryPick.title must be a real release; must not appear in the anchor title lists.
+- If anchors are very few, stay humble and generic where needed, but still tie blindSpot and month to what little is there.`;
 
 function normalizeProfileInsight(obj) {
   if (!obj || typeof obj !== "object") return null;
@@ -297,7 +303,7 @@ export async function generateProfileInsights({ stats, weekKey, monthKey, displa
 
   let raw;
   if (provider === "ollama") {
-    raw = await runOllamaJsonCompletion(PROFILE_INSIGHT_SYSTEM, user, 0.55);
+    raw = await runOllamaJsonCompletion(PROFILE_INSIGHT_SYSTEM, user, 0.45);
   } else {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) throw new Error("GROQ_API_KEY is not set");
@@ -314,8 +320,8 @@ export async function generateProfileInsights({ stats, weekKey, monthKey, displa
           { role: "system", content: PROFILE_INSIGHT_SYSTEM },
           { role: "user", content: user },
         ],
-        temperature: 0.55,
-        max_tokens: 900,
+        temperature: 0.45,
+        max_tokens: 1100,
       }),
     });
     const data = await res.json().catch(() => ({}));
