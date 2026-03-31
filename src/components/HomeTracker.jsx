@@ -220,6 +220,7 @@ function TmdbHints({
               alignItems: "flex-start",
               gap: 12,
               padding: "8px 10px",
+              minWidth: 0,
             }}
           >
             <button
@@ -259,8 +260,8 @@ function TmdbHints({
                   flex: "1 1 0%",
                   minWidth: 0,
                   lineHeight: 1.35,
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-word",
+                  overflowWrap: "break-word",
+                  wordBreak: "normal",
                 }}
               >
                 {r.title}
@@ -278,6 +279,7 @@ function TmdbHints({
                   alignItems: "flex-end",
                   gap: 6,
                   flex: "0 0 auto",
+                  flexShrink: 0,
                   maxWidth: 132,
                   alignSelf: "flex-start",
                   paddingTop: 2,
