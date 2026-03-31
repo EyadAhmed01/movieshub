@@ -4,7 +4,6 @@
  */
 
 const TITLE_HEADER_RE = /^(title|show|series|program|nom|titel|name)$/i;
-const DATE_HEADER_RE = /^(date|time|start|started|watched|viewed|datum|fecha)$/i;
 
 /** Remove BOM, trim, collapse whitespace, strip wrapping quotes. */
 export function cleanCsvCell(s) {
@@ -65,8 +64,9 @@ function detectDelimiter(line) {
 
 function findColumnIndex(headers, re) {
   for (let i = 0; i < headers.length; i++) {
-    const h = headers[i].toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (re.test(headers[i]) || (h && re.test(h))) return i;
+    const raw = cleanCsvCell(headers[i]).toLowerCase();
+    const compact = raw.replace(/[^a-z0-9]/g, "");
+    if (re.test(raw) || re.test(compact)) return i;
   }
   return -1;
 }
@@ -78,8 +78,11 @@ function looseTitleColumn(headers) {
 }
 
 function looseDateColumn(headers) {
-  const i = findColumnIndex(headers, DATE_HEADER_RE);
-  return i >= 0 ? i : -1;
+  for (let i = 0; i < headers.length; i++) {
+    const x = cleanCsvCell(headers[i]).toLowerCase();
+    if (/\b(date|time|start|watched|viewed|datum|fecha)\b/i.test(x)) return i;
+  }
+  return -1;
 }
 
 /** Extract year from Netflix-style datetime strings. */

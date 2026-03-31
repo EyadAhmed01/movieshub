@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { FF } from "@/lib/fonts";
 import MovieChat from "@/components/MovieChat";
+import NetflixImportPanel from "@/components/NetflixImportPanel";
 import RecommendationsRow from "@/components/RecommendationsRow";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w92";
@@ -761,6 +762,7 @@ export default function HomeTracker() {
               </button>
             ))}
           </div>
+          <NetflixImportPanel onImported={refreshAll} />
         </div>
       </div>
 

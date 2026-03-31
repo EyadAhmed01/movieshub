@@ -23,6 +23,7 @@ export const config = {
     "/api/recommendations",
     "/api/chat",
     "/api/library/:path*",
+    "/api/import/:path*",
     "/watchlist",
     "/api/watchlist/:path*",
   ],
