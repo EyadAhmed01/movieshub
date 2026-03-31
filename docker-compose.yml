@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: movie
+      POSTGRES_PASSWORD: movie
+      POSTGRES_DB: movie
+    ports:
+      - "5432:5432"
+    volumes:
+      - movie_pg:/var/lib/postgresql/data
+
+volumes:
+  movie_pg:
