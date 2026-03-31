@@ -113,9 +113,9 @@ export default function NetflixImportPanel({ onImported }) {
                 Submit the request; when you receive the email, download the <strong style={{ color: "#c8c4ba" }}>.zip</strong> and unzip it.
               </li>
               <li style={{ marginBottom: 8 }}>
-                In the export folder, open the CSV that lists viewing activity — often named like{" "}
-                <strong style={{ color: "#c8c4ba" }}>ViewingActivity.csv</strong> (or under a <code style={{ color: "#666" }}>CSV</code> folder).
-                It should have at least a <strong style={{ color: "#c8c4ba" }}>Title</strong> column and usually a date/time column.
+                In the export folder, open the CSV that lists viewing activity — often <strong style={{ color: "#c8c4ba" }}>NetflixViewingHistory.csv</strong> or{" "}
+                <strong style={{ color: "#c8c4ba" }}>ViewingActivity.csv</strong> (sometimes under a <code style={{ color: "#666" }}>CSV</code> folder). Expected
+                header row: <code style={{ color: "#666" }}>Title,Date</code> — titles in quotes, dates like <code style={{ color: "#666" }}>3/30/26</code> (M/D/YY) are supported.
               </li>
               <li>
                 Upload that file here (or paste its contents). We strip extra quotes/spacing, match each title to{" "}
@@ -206,6 +206,15 @@ export default function NetflixImportPanel({ onImported }) {
                 <strong style={{ color: "#c8c4ba" }}>{result.createdSeries}</strong> · already in library:{" "}
                 <strong>{result.skippedExisting}</strong> · could not match: <strong>{result.unmatched?.length ?? 0}</strong>
               </p>
+              {result.skippedExisting > 0 &&
+                result.createdMovies === 0 &&
+                result.createdSeries === 0 &&
+                (result.unmatched?.length ?? 0) === 0 && (
+                  <p style={{ margin: "12px 0 0", fontSize: 12, color: "#7a7068", lineHeight: 1.5 }}>
+                    All processed titles were already linked in your library — that is normal on a second import. Click import again to
+                    process the next batch of unique shows/movies from the same file.
+                  </p>
+                )}
               {result.unmatched?.length > 0 && (
                 <details style={{ marginTop: 10 }}>
                   <summary style={{ cursor: "pointer", color: "#666", fontSize: 12 }}>Show unmatched titles</summary>

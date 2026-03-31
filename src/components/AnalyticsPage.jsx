@@ -154,6 +154,22 @@ export default function AnalyticsPage() {
                 ← Library
               </Link>
               <Link
+                href="/what-to-watch"
+                style={{
+                  fontSize: 10,
+                  fontFamily: FF.mono,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#c8c4ba",
+                  textDecoration: "none",
+                  border: "1px solid #4a3030",
+                  padding: "8px 12px",
+                  borderRadius: 6,
+                }}
+              >
+                What to watch?
+              </Link>
+              <Link
                 href="/watchlist"
                 style={{
                   fontSize: 10,

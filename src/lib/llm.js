@@ -157,7 +157,7 @@ async function runGroqJsonCompletion(system, user) {
   return String(text || "").trim();
 }
 
-async function runOllamaJsonCompletion(system, user) {
+async function runOllamaJsonCompletion(system, user, temperature = 0.15) {
   const base = (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
   const model = process.env.OLLAMA_MODEL || "llama3.2";
   const res = await fetch(`${base}/api/chat`, {
@@ -170,10 +170,76 @@ async function runOllamaJsonCompletion(system, user) {
         { role: "user", content: user },
       ],
       stream: false,
-      options: { temperature: 0.15 },
+      options: { temperature },
     }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error || "Ollama request failed");
   return String(data?.message?.content || "").trim();
+}
+
+const WHAT_TO_WATCH_SYSTEM = `You are a film and TV recommendation engine. Output ONLY a single JSON object. No markdown fences, no extra text.
+Keys (all required):
+- "title": exact, real, well-known English release title (film or show name only, no episode titles).
+- "mediaType": either "movie" or "tv" (lowercase).
+- "genreLabel": one short genre label (e.g. "Sci-Fi thriller").
+- "durationGuess": approximate runtime, e.g. "2h 15m" for a film or "~22 min per episode" / "~50 min per episode" for series.
+- "description": 2–3 sentences pitching why it fits; no major spoilers.
+
+Pick exactly ONE title that fits the user's mood, genre preference, format, and tone. Use titles that exist in the real world.`;
+
+function parseJsonObject(raw) {
+  try {
+    return JSON.parse(stripJsonFence(raw));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @param {{ mood: string, genre: string, format: string, tone: string }} choices
+ */
+export async function suggestWhatToWatch(choices) {
+  const provider = (process.env.LLM_PROVIDER || "groq").toLowerCase();
+  const user = `User choices (fixed options they picked):\n${JSON.stringify(choices, null, 2)}\n\nReturn the JSON object now.`;
+  let raw;
+  if (provider === "ollama") {
+    raw = await runOllamaJsonCompletion(WHAT_TO_WATCH_SYSTEM, user, 0.45);
+  } else {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) throw new Error("GROQ_API_KEY is not set");
+    const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: WHAT_TO_WATCH_SYSTEM },
+          { role: "user", content: user },
+        ],
+        temperature: 0.45,
+        max_tokens: 700,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error?.message || "Groq request failed");
+    raw = String(data?.choices?.[0]?.message?.content || "").trim();
+  }
+
+  const obj = parseJsonObject(raw);
+  if (!obj || typeof obj.title !== "string") {
+    throw new Error("Model did not return valid JSON with a title");
+  }
+  const mediaType = obj.mediaType === "tv" ? "tv" : "movie";
+  return {
+    title: String(obj.title).trim(),
+    mediaType,
+    genreLabel: String(obj.genreLabel || "—").trim(),
+    durationGuess: String(obj.durationGuess || "—").trim(),
+    description: String(obj.description || "").trim(),
+  };
 }

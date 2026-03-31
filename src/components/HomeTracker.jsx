@@ -693,6 +693,23 @@ export default function HomeTracker() {
                 Watch next
               </Link>
               <Link
+                href="/what-to-watch"
+                style={{
+                  fontSize: 10,
+                  fontFamily: FF.mono,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "#c8c4ba",
+                  textDecoration: "none",
+                  border: "1px solid #4a3030",
+                  padding: "8px 12px",
+                  borderRadius: 6,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                What to watch?
+              </Link>
+              <Link
                 href="/analytics"
                 style={{
                   fontSize: 10,

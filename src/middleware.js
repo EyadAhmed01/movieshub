@@ -14,6 +14,8 @@ export const config = {
   matcher: [
     "/",
     "/analytics",
+    "/what-to-watch",
+    "/api/what-to-watch",
     "/login",
     "/signup",
     "/api/movies/:path*",

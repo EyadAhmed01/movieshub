@@ -85,18 +85,122 @@ function looseDateColumn(headers) {
   return -1;
 }
 
-/** Extract year from Netflix-style datetime strings. */
+/** 2-digit Netflix years: 25→2025, 99→1999 */
+function expandTwoDigitYear(yy) {
+  const n = parseInt(yy, 10);
+  if (!Number.isFinite(n) || n > 99) return null;
+  return n < 70 ? 2000 + n : 1900 + n;
+}
+
+/** Extract year from Netflix-style datetime strings (incl. M/D/YY from ViewingHistory.csv). */
 export function yearFromNetflixDate(str) {
   if (!str) return null;
   const s = String(str).trim();
   const iso = s.match(/\b(19|20)\d{2}-\d{2}-\d{2}\b/);
   if (iso) return parseInt(iso[0].slice(0, 4), 10);
-  const mdy = s.match(/\b(0?\d{1,2})[./-](0?\d{1,2})[./-]((19|20)\d{2})\b/);
-  if (mdy) return parseInt(mdy[3], 10);
-  const dmy = s.match(/\b(0?\d{1,2})[./-](0?\d{1,2})[./-]((19|20)\d{2})\b/);
-  if (dmy) return parseInt(dmy[3], 10);
+  const mdy4 = s.match(/\b(0?\d{1,2})[./-](0?\d{1,2})[./-]((19|20)\d{2})\b/);
+  if (mdy4) return parseInt(mdy4[3], 10);
+  const dmy4 = s.match(/\b(0?\d{1,2})[./-](0?\d{1,2})[./-]((19|20)\d{2})\b/);
+  if (dmy4) return parseInt(dmy4[3], 10);
+  const mdy2 = s.match(/\b(0?\d{1,2})[./-](0?\d{1,2})[./-](\d{2})\b/);
+  if (mdy2) {
+    const y = expandTwoDigitYear(mdy2[3]);
+    if (y != null) return y;
+  }
   const y = s.match(/\b(19|20)\d{2}\b/);
   return y ? parseInt(y[0], 10) : null;
+}
+
+function normDedupeKey(s) {
+  return cleanCsvCell(s).toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Netflix title → dedupe key + TMDB TV search string (handles Narcos: Mexico, Season rows, etc.).
+ * @returns {{ key: string, searchTvQuery: string | null, fullTitle: string }}
+ */
+export function netflixTitleToImportParts(rawTitle) {
+  const title = cleanCsvCell(rawTitle);
+  if (!title) return { key: "skip", searchTvQuery: null, fullTitle: "" };
+
+  const seasonBlock = title.match(/^([\s\S]+?):\s*Season\s+\d+/i);
+  if (seasonBlock) {
+    const searchPrefix = seasonBlock[1].trim();
+    return {
+      key: `tv:${normDedupeKey(searchPrefix)}`,
+      searchTvQuery: searchPrefix,
+      fullTitle: title,
+    };
+  }
+
+  const partBlock = title.match(/^([\s\S]+?):\s*Part\s+\d+\s*:/i);
+  if (partBlock) {
+    const searchPrefix = partBlock[1].trim();
+    return {
+      key: `tv:${normDedupeKey(searchPrefix)}`,
+      searchTvQuery: searchPrefix,
+      fullTitle: title,
+    };
+  }
+
+  const limited = title.match(/^([\s\S]+?):\s*Limited Series\s*:/i);
+  if (limited) {
+    const searchPrefix = limited[1].trim();
+    return {
+      key: `tv:${normDedupeKey(searchPrefix)}`,
+      searchTvQuery: searchPrefix,
+      fullTitle: title,
+    };
+  }
+
+  if (/^Stranger Things\s*:/i.test(title)) {
+    return {
+      key: "tv:stranger things",
+      searchTvQuery: "Stranger Things",
+      fullTitle: title,
+    };
+  }
+
+  const chapterBlock = title.match(/^([\s\S]+?):\s*Chapter\s+/i);
+  if (chapterBlock) {
+    const searchPrefix = chapterBlock[1].trim();
+    return {
+      key: `tv:${normDedupeKey(searchPrefix)}`,
+      searchTvQuery: searchPrefix,
+      fullTitle: title,
+    };
+  }
+
+  const colonIdx = title.indexOf(":");
+  if (colonIdx > 0) {
+    const first = title.slice(0, colonIdx).trim();
+    const rest = title.slice(colonIdx + 1).trim();
+    if (/^episode\s+\d/i.test(rest)) {
+      return {
+        key: `tv:${normDedupeKey(first)}`,
+        searchTvQuery: first,
+        fullTitle: title,
+      };
+    }
+    if (/^(the|a|an)\s+/i.test(rest) || rest.length > 52) {
+      return {
+        key: `m:${normDedupeKey(title)}`,
+        searchTvQuery: null,
+        fullTitle: title,
+      };
+    }
+    return {
+      key: `tv:${normDedupeKey(first)}`,
+      searchTvQuery: first,
+      fullTitle: title,
+    };
+  }
+
+  return {
+    key: `m:${normDedupeKey(title)}`,
+    searchTvQuery: null,
+    fullTitle: title,
+  };
 }
 
 /**
@@ -140,21 +244,17 @@ export function parseNetflixCsv(text) {
 }
 
 /**
- * One row per show or movie (episodes collapsed to series name).
+ * One row per show or movie (episodes collapsed using Netflix title shapes).
  */
 export function dedupeNetflixRows(rows) {
   const map = new Map();
   for (const row of rows) {
-    const t = row.title;
-    const colon = t.indexOf(":");
-    const key =
-      colon > 0
-        ? `tv:${cleanCsvCell(t.slice(0, colon)).toLowerCase()}`
-        : `m:${t.toLowerCase()}`;
-    if (!map.has(key)) {
-      map.set(key, {
-        title: t,
-        seriesPrefix: colon > 0 ? cleanCsvCell(t.slice(0, colon)) : null,
+    const parts = netflixTitleToImportParts(row.title);
+    if (parts.key === "skip" || !parts.fullTitle) continue;
+    if (!map.has(parts.key)) {
+      map.set(parts.key, {
+        title: parts.fullTitle,
+        seriesPrefix: parts.searchTvQuery,
         dateRaw: row.dateRaw,
         line: row.line,
       });

@@ -89,8 +89,8 @@ export async function resolveNetflixLineToTmdb({ title, seriesPrefix, dateRaw })
   return null;
 }
 
-/** Keep each request under typical serverless timeouts (many TMDB calls per title). Re-run import for more rows. */
-const MAX_ITEMS_PER_REQUEST = 28;
+/** Re-run import with the same file to continue (skips titles already in your library). */
+const MAX_ITEMS_PER_REQUEST = 36;
 
 /**
  * @param {import('@prisma/client').PrismaClient} prisma

@@ -399,6 +399,76 @@ a.rec-card-link:hover {
   transform: translateY(-2px);
 }
 
+/* —— What to watch? reveal —— */
+@keyframes wtw-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes wtw-glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(229, 9, 20, 0);
+  }
+  50% {
+    box-shadow: 0 0 28px 2px rgba(229, 9, 20, 0.12);
+  }
+}
+
+.wtw-card {
+  animation: wtw-glow-pulse 2.8s ease-in-out 1;
+}
+
+.wtw-reveal {
+  opacity: 0;
+  animation: wtw-reveal 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.wtw-reveal--1 {
+  animation-delay: 0.05s;
+}
+.wtw-reveal--2 {
+  animation-delay: 0.18s;
+}
+.wtw-reveal--3 {
+  animation-delay: 0.3s;
+}
+.wtw-reveal--4 {
+  animation-delay: 0.42s;
+}
+.wtw-reveal--5 {
+  animation-delay: 0.54s;
+}
+.wtw-reveal--6 {
+  animation-delay: 0.66s;
+}
+
+.wtw-choice {
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.wtw-choice:hover {
+  transform: translateY(-1px);
+}
+
+.wtw-choice--on {
+  border-color: #e50914 !important;
+  background: rgba(229, 9, 20, 0.12) !important;
+  color: #f5f0e8 !important;
+}
+
 @media (max-width: 900px) {
   .watchlist-grid {
     grid-template-columns: 1fr !important;
