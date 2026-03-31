@@ -31,7 +31,7 @@ export const metadata = {
   appleWebApp: {
     capable: true,
     title: "Viewing history",
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
   },
   icons: {
     icon: "/icon-192.png",
