@@ -264,12 +264,15 @@ button.tracker-mobile-nav-link:last-of-type {
   min-width: 0;
 }
 
-.tracker-main-grid--split {
-  grid-template-columns: 1fr 1fr;
-}
-
 .tracker-main-grid--single {
   grid-template-columns: 1fr;
+}
+
+/* Movies + series on “All” tab: series section spacing (single column; avoids squeezed title columns). */
+.tracker-series-below-movies {
+  border-top: 1px solid #181818;
+  margin-top: 12px;
+  padding-top: 20px;
 }
 
 .tracker-table-scroll {
@@ -297,6 +300,10 @@ button.tracker-mobile-nav-link:last-of-type {
 
 .tracker-row-meta--right {
   text-align: right;
+}
+
+.tracker-row--tmdb:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .tracker-row-idx {
@@ -333,7 +340,7 @@ button.tracker-mobile-nav-link:last-of-type {
   line-clamp: 2;
   white-space: normal;
   word-break: break-word;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   line-height: 1.4;
 }
 
@@ -372,7 +379,7 @@ button.tracker-mobile-nav-link:last-of-type {
   line-clamp: 2;
   white-space: normal;
   word-break: break-word;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   line-height: 1.4;
 }
 
@@ -418,25 +425,6 @@ button.tracker-mobile-nav-link:last-of-type {
   text-align: center;
   padding-left: 16px !important;
   padding-right: 16px !important;
-}
-
-/* Stack movies / series before each column becomes narrower than the row grid (avoids horizontal scroll). */
-@media (max-width: 1200px) {
-  .tracker-main-grid--split {
-    grid-template-columns: 1fr;
-  }
-
-  .tracker-movies-col--split {
-    border-right: none !important;
-    padding-right: 0 !important;
-  }
-
-  .tracker-series-col--stacked {
-    padding-left: 0 !important;
-    border-top: 1px solid #181818;
-    margin-top: 12px;
-    padding-top: 20px;
-  }
 }
 
 /* Card-style library rows + full-width ratings (tablets & phones; avoids cramped horizontal table). */
@@ -1057,7 +1045,7 @@ button.rec-card-link:hover {
   border-radius: 12px;
 }
 
-/* Shared brand mark (/assets/logo.png) */
+/* Shared brand mark (BrandLogo: PNG with SVG fallback) */
 .rp-brand-logo {
   display: block;
   border-radius: 12px;

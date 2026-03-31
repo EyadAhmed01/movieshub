@@ -8,6 +8,7 @@ import { apiJson } from "@/lib/api";
 import MovieChat from "@/components/MovieChat";
 import TmdbHints from "@/components/TmdbHints";
 import BrandLogo from "@/components/BrandLogo";
+import RecommendationDetailModal from "@/components/RecommendationDetailModal";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w92";
 /** Sharper posters in library rows (not TMDB hint thumbnails). */
@@ -38,7 +39,10 @@ function RatingOutOfTen({ value, onChange }) {
           key={n}
           type="button"
           className={`rating-o10__btn ${n <= active ? "rating-o10__btn--on" : ""}`}
-          onClick={() => onChange(value === n ? 0 : n)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onChange(value === n ? 0 : n);
+          }}
           onMouseEnter={() => setHovered(n)}
           onMouseLeave={() => setHovered(0)}
           title={`${n}/10 — click again to clear`}
@@ -406,6 +410,8 @@ export default function HomeTracker() {
   const [showSeriesForm, setShowSeriesForm] = useState(false);
   const [flash, setFlash] = useState(null);
   const [quickAddBusyTmdbId, setQuickAddBusyTmdbId] = useState(null);
+  /** Same detail modal as My List / For You — `{ tmdbId, mediaType }` */
+  const [libraryDetailModal, setLibraryDetailModal] = useState(null);
 
   const showFlash = useCallback((msg) => {
     setFlash(msg);
@@ -610,34 +616,6 @@ export default function HomeTracker() {
           borderBottom: "1px solid #181818",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-            marginBottom: 14,
-            flexWrap: "wrap",
-          }}
-        >
-          <BrandLogo size={48} alt="" />
-          <div>
-            <p
-              style={{
-                margin: 0,
-                fontSize: 10,
-                letterSpacing: "0.2em",
-                color: "#e50914",
-                fontFamily: FF.mono,
-                fontWeight: 600,
-              }}
-            >
-              ROTTEN POTATOES
-            </p>
-            <p style={{ margin: "4px 0 0", fontSize: 14, color: "#8a8580", fontFamily: FF.sans }}>
-              Your library — movies &amp; series
-            </p>
-          </div>
-        </div>
         <div className="tracker-tabs">
           {[
             { key: "all", label: "All" },
@@ -672,15 +650,9 @@ export default function HomeTracker() {
       </div>
 
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 clamp(16px, 4vw, 40px) max(88px, env(safe-area-inset-bottom))" }}>
-        <div className={`tracker-main-grid ${filter === "all" ? "tracker-main-grid--split" : "tracker-main-grid--single"}`}>
+        <div className="tracker-main-grid tracker-main-grid--single">
           {(filter === "all" || filter === "movies") && (
-            <div
-              className={filter === "all" ? "tracker-movies-col--split" : undefined}
-              style={{
-                borderRight: filter === "all" ? "1px solid #181818" : "none",
-                paddingRight: filter === "all" ? 32 : 0,
-              }}
-            >
+            <div>
               <div className="tracker-section-head" style={{ padding: "20px 0 14px" }}>
                 <span
                   style={{
@@ -746,13 +718,20 @@ export default function HomeTracker() {
                 {filteredMovies.map((m, i) => (
                   <div
                     key={m.id}
-                    className="tracker-row tracker-movie-grid tracker-movie-row tracker-row-animate"
+                    className={`tracker-row tracker-movie-grid tracker-movie-row tracker-row-animate${m.tmdbId ? " tracker-row--tmdb" : ""}`}
                     style={{
                       padding: "9px 6px",
                       margin: "0 -6px",
                       borderRadius: 6,
                       borderBottom: "1px solid #0f0f0f",
+                      cursor: m.tmdbId ? "pointer" : undefined,
                     }}
+                    onClick={
+                      m.tmdbId
+                        ? () => setLibraryDetailModal({ tmdbId: m.tmdbId, mediaType: "movie" })
+                        : undefined
+                    }
+                    title={m.tmdbId ? "Click row for details (TMDB)" : undefined}
                   >
                   <div
                     className="tracker-row-poster-wrap"
@@ -797,7 +776,10 @@ export default function HomeTracker() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => removeMovie(m.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeMovie(m.id);
+                    }}
                     title="Remove"
                     style={{
                       background: "none",
@@ -823,10 +805,7 @@ export default function HomeTracker() {
           )}
 
           {(filter === "all" || filter === "series") && (
-            <div
-              className={filter === "all" ? "tracker-series-col--stacked" : undefined}
-              style={{ paddingLeft: filter === "all" ? 32 : 0 }}
-            >
+            <div className={filter === "all" ? "tracker-series-below-movies" : undefined}>
               <div className="tracker-section-head" style={{ padding: "20px 0 14px" }}>
                 <span
                   style={{
@@ -886,13 +865,20 @@ export default function HomeTracker() {
                 {filteredSeries.map((s, i) => (
                   <div
                     key={s.id}
-                    className="tracker-row tracker-series-grid tracker-series-row tracker-row-animate"
+                    className={`tracker-row tracker-series-grid tracker-series-row tracker-row-animate${s.tmdbId ? " tracker-row--tmdb" : ""}`}
                     style={{
                       padding: "9px 6px",
                       margin: "0 -6px",
                       borderRadius: 6,
                       borderBottom: "1px solid #0f0f0f",
+                      cursor: s.tmdbId ? "pointer" : undefined,
                     }}
+                    onClick={
+                      s.tmdbId
+                        ? () => setLibraryDetailModal({ tmdbId: s.tmdbId, mediaType: "tv" })
+                        : undefined
+                    }
+                    title={s.tmdbId ? "Click row for details (TMDB)" : undefined}
                   >
                   <div
                     className="tracker-row-poster-wrap"
@@ -943,7 +929,10 @@ export default function HomeTracker() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => removeSeries(s.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeSeries(s.id);
+                    }}
                     title="Remove"
                     style={{
                       background: "none",
@@ -969,6 +958,9 @@ export default function HomeTracker() {
           )}
         </div>
       </div>
+      {libraryDetailModal && (
+        <RecommendationDetailModal item={libraryDetailModal} onClose={() => setLibraryDetailModal(null)} />
+      )}
       <MovieChat />
     </div>
   );

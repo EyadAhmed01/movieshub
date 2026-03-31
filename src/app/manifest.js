@@ -10,15 +10,15 @@ export default function manifest() {
     theme_color: "#1a1a20",
     icons: [
       {
-        src: "/assets/logo.png",
-        sizes: "512x512",
-        type: "image/png",
+        src: "/assets/logo.svg",
+        sizes: "any",
+        type: "image/svg+xml",
         purpose: "any",
       },
       {
-        src: "/assets/logo.png",
-        sizes: "512x512",
-        type: "image/png",
+        src: "/assets/logo.svg",
+        sizes: "any",
+        type: "image/svg+xml",
         purpose: "maskable",
       },
     ],
