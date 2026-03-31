@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { badgesWithUnlockState } from "@/lib/badges";
+import { getCurrentBadge } from "@/lib/badges";
 import {
   buildLibraryStatsPayload,
   currentIsoWeekKey,
@@ -54,7 +54,6 @@ export async function GET(req) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const userId = session.user.id;
-  const refresh = req.nextUrl.searchParams.get("refresh") === "1";
 
   const [user, movies, series] = await Promise.all([
     prisma.user.findUnique({
@@ -70,7 +69,7 @@ export async function GET(req) {
   }
 
   const stats = buildLibraryStatsPayload(movies, series);
-  const badges = badgesWithUnlockState(stats.totalMinutesWatched);
+  const currentBadge = getCurrentBadge(stats.totalMinutesWatched);
   const weekKey = currentIsoWeekKey();
   const monthKey = currentMonthKey();
 
@@ -79,7 +78,7 @@ export async function GET(req) {
       ...stats,
       watchTimeLabel: formatWatchTime(stats.totalMinutesWatched),
     },
-    badges,
+    currentBadge,
     weekKey,
     monthKey,
     llmConfigured: llmConfigured(),
@@ -104,7 +103,7 @@ export async function GET(req) {
     }
   }
 
-  if (!refresh && cacheValid(cache, weekKey, monthKey) && cache?.tasteSummary) {
+  if (cacheValid(cache, weekKey, monthKey) && cache?.tasteSummary) {
     return NextResponse.json({
       ...base,
       insights: {

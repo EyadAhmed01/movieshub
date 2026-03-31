@@ -23,6 +23,12 @@ function actorKey(c) {
   return `name:${c.name.toLowerCase().trim()}`;
 }
 
+/** Stored JSON may use camelCase or legacy snake_case from TMDB-shaped blobs. */
+function castProfilePath(c) {
+  const p = c?.profilePath ?? c?.profile_path;
+  return typeof p === "string" && p.length > 0 ? p : null;
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -66,7 +72,7 @@ export async function GET() {
     for (const c of castForStats(m.cast)) {
       const k = actorKey(c);
       const prev = actorCounts.get(k);
-      const path = c.profilePath && typeof c.profilePath === "string" ? c.profilePath : null;
+      const path = castProfilePath(c);
       if (prev) {
         prev.count += 1;
         if (!prev.profilePath && path) prev.profilePath = path;
@@ -79,7 +85,7 @@ export async function GET() {
     for (const c of castForStats(s.cast)) {
       const k = actorKey(c);
       const prev = actorCounts.get(k);
-      const path = c.profilePath && typeof c.profilePath === "string" ? c.profilePath : null;
+      const path = castProfilePath(c);
       if (prev) {
         prev.count += 1;
         if (!prev.profilePath && path) prev.profilePath = path;

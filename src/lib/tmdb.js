@@ -68,7 +68,8 @@ export async function searchTmdb(query, type) {
  */
 export async function fetchMovieByTmdbId(tmdbId, options = {}) {
   const castLimit = options.castLimit ?? TOP_BILLED_CAST_LIMIT;
-  const richCast = options.richCast ?? false;
+  /** Include profile_path (and character) so stored cast can show headshots in Analytics etc. */
+  const richCast = options.richCast ?? true;
   const apiKey = key();
   if (!apiKey) return null;
   const [detailRes, creditsRes] = await Promise.all([
@@ -103,7 +104,7 @@ export async function fetchMovieByTmdbId(tmdbId, options = {}) {
  */
 export async function fetchTvByTmdbId(tmdbId, options = {}) {
   const castLimit = options.castLimit ?? TOP_BILLED_CAST_LIMIT;
-  const richCast = options.richCast ?? false;
+  const richCast = options.richCast ?? true;
   const apiKey = key();
   if (!apiKey) return null;
   const [detailRes, creditsRes] = await Promise.all([

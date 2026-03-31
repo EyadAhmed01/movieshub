@@ -8,6 +8,7 @@ import MovieChat from "@/components/MovieChat";
 import NetflixImportPanel from "@/components/NetflixImportPanel";
 import RecommendationsRow from "@/components/RecommendationsRow";
 import WhatToWatchModal from "@/components/WhatToWatchModal";
+import RecommendationDetailModal from "@/components/RecommendationDetailModal";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w92";
 
@@ -99,6 +100,8 @@ function TmdbHints({
   query,
   type,
   onPick,
+  /** Optional: open detail modal (e.g. same as recommendation cards) when the row is clicked. */
+  onOpenDetail,
   visible,
   libraryMovies = [],
   onQuickAdd,
@@ -188,7 +191,10 @@ function TmdbHints({
           >
             <button
               type="button"
-              onClick={() => onPick(r)}
+              onClick={() => {
+                onPick(r);
+                onOpenDetail?.(r);
+              }}
               style={{
                 flex: 1,
                 minWidth: 0,
@@ -211,9 +217,9 @@ function TmdbHints({
               )}
               <span style={{ flex: 1, lineHeight: 1.35, minWidth: 0 }}>
                 {r.title}
-                {r.year != null && <span style={{ color: "#555", marginLeft: 8 }}>({r.year})</span>}
+                {r.year != null && <span style={{ color: "#8a8580", marginLeft: 8 }}>({r.year})</span>}
                 {typeof r.voteAverage === "number" && (
-                  <span style={{ color: "#444", marginLeft: 8 }}>★ {r.voteAverage.toFixed(1)}</span>
+                  <span style={{ color: "#7a8a9a", marginLeft: 8 }}>★ {r.voteAverage.toFixed(1)}</span>
                 )}
               </span>
             </button>
@@ -628,6 +634,7 @@ export default function HomeTracker() {
   const [showSeriesForm, setShowSeriesForm] = useState(false);
   const [flash, setFlash] = useState(null);
   const [wtwOpen, setWtwOpen] = useState(false);
+  const [searchDetailModal, setSearchDetailModal] = useState(null);
   const [quickAddBusyTmdbId, setQuickAddBusyTmdbId] = useState(null);
   const [profileCard, setProfileCard] = useState(null);
 
@@ -788,6 +795,9 @@ export default function HomeTracker() {
   return (
     <div className="tracker-page-animate" style={{ minHeight: "100vh", background: "#0a0a0a", fontFamily: FF.sans, color: "#e8e0d0" }}>
       {wtwOpen && <WhatToWatchModal onClose={() => setWtwOpen(false)} />}
+      {searchDetailModal && (
+        <RecommendationDetailModal item={searchDetailModal} onClose={() => setSearchDetailModal(null)} />
+      )}
       <div
         className="tracker-header-animate"
         style={{
@@ -821,10 +831,10 @@ export default function HomeTracker() {
               </p>
               <h1
                 style={{
-                  fontFamily: FF.display,
+                  fontFamily: FF.sans,
                   fontSize: "clamp(20px, 5.5vw, 40px)",
-                  fontWeight: 400,
-                  letterSpacing: "-0.03em",
+                  fontWeight: 600,
+                  letterSpacing: "-0.02em",
                   margin: 0,
                   lineHeight: 1.12,
                   color: "#f5f0e8",
@@ -875,14 +885,14 @@ export default function HomeTracker() {
               <Link
                 href="/watchlist"
                 style={{
-                  fontSize: 10,
-                  fontFamily: FF.mono,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "#8a8a8a",
+                  fontSize: 12,
+                  fontFamily: FF.sans,
+                  fontWeight: 500,
+                  letterSpacing: "0.02em",
+                  color: "#c8c4ba",
                   textDecoration: "none",
-                  border: "1px solid #333",
-                  padding: "8px 12px",
+                  border: "1px solid #444",
+                  padding: "8px 14px",
                   borderRadius: 6,
                   whiteSpace: "nowrap",
                 }}
@@ -893,14 +903,14 @@ export default function HomeTracker() {
                 type="button"
                 onClick={() => setWtwOpen(true)}
                 style={{
-                  fontSize: 10,
-                  fontFamily: FF.mono,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "#8a8a8a",
+                  fontSize: 12,
+                  fontFamily: FF.sans,
+                  fontWeight: 500,
+                  letterSpacing: "0.02em",
+                  color: "#c8c4ba",
                   background: "transparent",
-                  border: "1px solid #333",
-                  padding: "8px 12px",
+                  border: "1px solid #444",
+                  padding: "8px 14px",
                   borderRadius: 6,
                   whiteSpace: "nowrap",
                   cursor: "pointer",
@@ -911,14 +921,14 @@ export default function HomeTracker() {
               <Link
                 href="/analytics"
                 style={{
-                  fontSize: 10,
-                  fontFamily: FF.mono,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "#8a8a8a",
+                  fontSize: 12,
+                  fontFamily: FF.sans,
+                  fontWeight: 500,
+                  letterSpacing: "0.02em",
+                  color: "#c8c4ba",
                   textDecoration: "none",
-                  border: "1px solid #333",
-                  padding: "8px 12px",
+                  border: "1px solid #444",
+                  padding: "8px 14px",
                   borderRadius: 6,
                   whiteSpace: "nowrap",
                 }}
@@ -928,41 +938,42 @@ export default function HomeTracker() {
               <Link
                 href="/profile"
                 style={{
-                  fontSize: 10,
-                  fontFamily: FF.mono,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "#8a8a8a",
+                  fontSize: 12,
+                  fontFamily: FF.sans,
+                  fontWeight: 500,
+                  letterSpacing: "0.02em",
+                  color: "#c8c4ba",
                   textDecoration: "none",
-                  border: "1px solid #333",
-                  padding: "8px 12px",
+                  border: "1px solid #444",
+                  padding: "8px 14px",
                   borderRadius: 6,
                   whiteSpace: "nowrap",
                 }}
               >
                 Profile
               </Link>
-              {profileCard?.preferences?.showBadgesOnHome !== false &&
-                profileCard?.watchSummary &&
-                profileCard.watchSummary.badgeTotal > 0 && (
-                  <Link
-                    href="/profile"
-                    title="Watch-time badges"
-                    style={{
-                      fontSize: 10,
-                      fontFamily: FF.mono,
-                      letterSpacing: "0.1em",
-                      color: "#a08070",
-                      textDecoration: "none",
-                      border: "1px solid #3a3028",
-                      padding: "8px 12px",
-                      borderRadius: 6,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {profileCard.watchSummary.unlockedBadgeCount}/{profileCard.watchSummary.badgeTotal} badges
-                  </Link>
-                )}
+              {profileCard?.preferences?.showBadgesOnHome !== false && profileCard?.watchSummary?.currentBadge && (
+                <Link
+                  href="/profile"
+                  title="Your watch-time rank"
+                  style={{
+                    fontSize: 10,
+                    fontFamily: FF.mono,
+                    letterSpacing: "0.1em",
+                    color: "#a08070",
+                    textDecoration: "none",
+                    border: "1px solid #3a3028",
+                    padding: "8px 12px",
+                    borderRadius: 6,
+                    whiteSpace: "nowrap",
+                    maxWidth: 200,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {profileCard.watchSummary.currentBadge.title}
+                </Link>
+              )}
               <span style={{ fontSize: 10, color: "#3a3a3a", fontFamily: FF.mono, letterSpacing: "0.1em" }}>
                 ☁ saved to your account
               </span>
@@ -994,6 +1005,7 @@ export default function HomeTracker() {
                   query={search}
                   type="movie"
                   onPick={(r) => setSearch(r.title)}
+                  onOpenDetail={(r) => setSearchDetailModal({ tmdbId: r.tmdbId, mediaType: "movie" })}
                   visible={search.trim().length >= 2}
                   libraryMovies={movies}
                   onQuickAdd={quickAddMovieFromSearch}

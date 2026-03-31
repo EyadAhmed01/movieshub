@@ -19,6 +19,20 @@ function hasCast(row) {
   return Array.isArray(row.cast) && row.cast.length > 0;
 }
 
+/**
+ * True if any TMDB-identified cast row lacks a stored profile image (legacy saves had id + name only).
+ * Ignores AI-inferred rows (no person id) and avoids useless re-fetches when there is no TMDB id.
+ */
+function castMissingProfilePhotos(cast) {
+  if (!Array.isArray(cast) || cast.length === 0) return false;
+  return cast.some((c) => {
+    const p = c?.profilePath ?? c?.profile_path;
+    if (typeof p === "string" && p.trim() !== "") return false;
+    if (c?.inferred === true) return false;
+    return typeof c?.id === "number" && c.id > 0;
+  });
+}
+
 function parseStartYear(yearsStr) {
   const m = String(yearsStr || "").match(/(19|20)\d{2}/);
   return m ? parseInt(m[0], 10) : null;
@@ -60,7 +74,11 @@ export async function POST(request) {
       if (!m.tmdbId) continue;
       const hasG = Array.isArray(m.genres) && m.genres.length > 0;
       const needs =
-        m.runtimeMinutes == null || m.runtimeMinutes <= 0 || !hasG || !hasCast(m);
+        m.runtimeMinutes == null ||
+        m.runtimeMinutes <= 0 ||
+        !hasG ||
+        !hasCast(m) ||
+        castMissingProfilePhotos(m.cast);
       if (!needs) continue;
       const meta = await fetchMovieByTmdbId(m.tmdbId);
       await sleep(120);
@@ -86,7 +104,8 @@ export async function POST(request) {
         s.episodeRuntimeMinutes == null ||
         s.episodeRuntimeMinutes <= 0 ||
         !hasG ||
-        !hasCast(s);
+        !hasCast(s) ||
+        castMissingProfilePhotos(s.cast);
       if (!needs) continue;
       const meta = await fetchTvByTmdbId(s.tmdbId);
       await sleep(120);

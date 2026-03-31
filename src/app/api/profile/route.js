@@ -2,19 +2,19 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { WATCH_BADGES, unlockedBadgeCount } from "@/lib/badges";
+import { getCurrentBadge } from "@/lib/badges";
 import { computeWatchMinutes } from "@/lib/libraryStats";
 
 const DEFAULT_PREFS = {
   showBadgesOnHome: true,
-  weeklyDigest: false,
   chatSpoilerMode: "warn",
 };
 
 function mergePrefs(stored) {
   const base = { ...DEFAULT_PREFS };
   if (!stored || typeof stored !== "object" || Array.isArray(stored)) return base;
-  return { ...base, ...stored };
+  const { weeklyDigest: _removed, ...rest } = stored;
+  return { ...base, ...rest };
 }
 
 async function watchSummaryForUser(userId) {
@@ -28,8 +28,7 @@ async function watchSummaryForUser(userId) {
   const { totalMinutes } = computeWatchMinutes(movies, series);
   return {
     totalMinutes,
-    unlockedBadgeCount: unlockedBadgeCount(totalMinutes),
-    badgeTotal: WATCH_BADGES.length,
+    currentBadge: getCurrentBadge(totalMinutes),
   };
 }
 
@@ -86,11 +85,11 @@ export async function PATCH(req) {
       select: { preferences: true },
     });
     const merged = mergePrefs(current?.preferences);
-    const allowedKeys = ["showBadgesOnHome", "weeklyDigest", "chatSpoilerMode"];
+    const allowedKeys = ["showBadgesOnHome", "chatSpoilerMode"];
     const next = { ...merged };
     for (const k of allowedKeys) {
       if (k in preferencesIn) {
-        if (k === "showBadgesOnHome" || k === "weeklyDigest") {
+        if (k === "showBadgesOnHome") {
           next[k] = Boolean(preferencesIn[k]);
         }
         if (k === "chatSpoilerMode") {

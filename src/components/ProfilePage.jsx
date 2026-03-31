@@ -44,20 +44,41 @@ const card = {
   marginBottom: 16,
 };
 
+const inputCss = {
+  width: "100%",
+  maxWidth: 400,
+  boxSizing: "border-box",
+  background: "#0f0f0f",
+  border: "1px solid #2a2a2a",
+  color: "#e8e0d0",
+  padding: "10px 14px",
+  fontSize: 14,
+  fontFamily: FF.sans,
+  borderRadius: 6,
+};
+
 export default function ProfilePage() {
-  const { status } = useSession();
+  const { status, update } = useSession();
+  const [activeTab, setActiveTab] = useState("profile");
   const [profile, setProfile] = useState(null);
   const [insightsData, setInsightsData] = useState(null);
   const [err, setErr] = useState("");
   const [insightsErr, setInsightsErr] = useState("");
-  const [regenBusy, setRegenBusy] = useState(false);
-  const [saveBusy, setSaveBusy] = useState(false);
-  const [saveMsg, setSaveMsg] = useState("");
 
   const [name, setName] = useState("");
   const [showBadgesOnHome, setShowBadgesOnHome] = useState(true);
-  const [weeklyDigest, setWeeklyDigest] = useState(false);
   const [chatSpoilerMode, setChatSpoilerMode] = useState("warn");
+
+  const [nameBusy, setNameBusy] = useState(false);
+  const [nameMsg, setNameMsg] = useState("");
+  const [prefBusy, setPrefBusy] = useState(false);
+  const [prefMsg, setPrefMsg] = useState("");
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwdBusy, setPwdBusy] = useState(false);
+  const [pwdMsg, setPwdMsg] = useState("");
 
   const loadProfile = useCallback(async () => {
     setErr("");
@@ -65,14 +86,12 @@ export default function ProfilePage() {
     setProfile(p);
     setName(p.name || "");
     setShowBadgesOnHome(Boolean(p.preferences?.showBadgesOnHome));
-    setWeeklyDigest(Boolean(p.preferences?.weeklyDigest));
     setChatSpoilerMode(p.preferences?.chatSpoilerMode === "open" ? "open" : "warn");
   }, []);
 
-  const loadInsights = useCallback(async (refresh = false) => {
+  const loadInsights = useCallback(async () => {
     setInsightsErr("");
-    const url = refresh ? "/api/profile/insights?refresh=1" : "/api/profile/insights";
-    const j = await apiJson(url);
+    const j = await apiJson("/api/profile/insights");
     setInsightsData(j);
   }, []);
 
@@ -91,46 +110,73 @@ export default function ProfilePage() {
     if (status !== "authenticated" || !profile) return;
     (async () => {
       try {
-        await loadInsights(false);
+        await loadInsights();
       } catch (e) {
         setInsightsErr(e instanceof Error ? e.message : "Failed to load insights");
       }
     })();
   }, [status, profile, loadInsights]);
 
-  const regenerate = async () => {
-    setRegenBusy(true);
-    setInsightsErr("");
+  const saveName = async () => {
+    setNameBusy(true);
+    setNameMsg("");
     try {
-      await loadInsights(true);
+      const p = await apiJson("/api/profile", {
+        method: "PATCH",
+        body: JSON.stringify({ name }),
+      });
+      setProfile(p);
+      setNameMsg("Saved.");
+      await update({ name: p.name || "" });
     } catch (e) {
-      setInsightsErr(e instanceof Error ? e.message : "Regenerate failed");
+      setNameMsg(e instanceof Error ? e.message : "Save failed");
     } finally {
-      setRegenBusy(false);
+      setNameBusy(false);
     }
   };
 
-  const saveSettings = async () => {
-    setSaveBusy(true);
-    setSaveMsg("");
+  const savePreferences = async () => {
+    setPrefBusy(true);
+    setPrefMsg("");
     try {
       const p = await apiJson("/api/profile", {
         method: "PATCH",
         body: JSON.stringify({
-          name,
           preferences: {
             showBadgesOnHome,
-            weeklyDigest,
             chatSpoilerMode,
           },
         }),
       });
       setProfile(p);
-      setSaveMsg("Saved.");
+      setPrefMsg("Saved.");
     } catch (e) {
-      setSaveMsg(e instanceof Error ? e.message : "Save failed");
+      setPrefMsg(e instanceof Error ? e.message : "Save failed");
     } finally {
-      setSaveBusy(false);
+      setPrefBusy(false);
+    }
+  };
+
+  const savePassword = async () => {
+    setPwdMsg("");
+    if (newPassword !== confirmPassword) {
+      setPwdMsg("New password and confirmation do not match.");
+      return;
+    }
+    setPwdBusy(true);
+    try {
+      await apiJson("/api/profile/password", {
+        method: "POST",
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPwdMsg("Password updated.");
+    } catch (e) {
+      setPwdMsg(e instanceof Error ? e.message : "Update failed");
+    } finally {
+      setPwdBusy(false);
     }
   };
 
@@ -163,6 +209,31 @@ export default function ProfilePage() {
 
   const insights = insightsData?.insights;
   const stats = insightsData?.stats;
+  const currentBadge = insightsData?.currentBadge;
+
+  const tabBtn = (id, label) => (
+    <button
+      type="button"
+      key={id}
+      onClick={() => setActiveTab(id)}
+      style={{
+        background: "transparent",
+        border: "none",
+        borderBottom: activeTab === id ? "2px solid #e50914" : "2px solid transparent",
+        color: activeTab === id ? "#f5f0e8" : "#666",
+        padding: "10px 4px",
+        marginRight: 20,
+        fontSize: 12,
+        fontFamily: FF.mono,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
+        cursor: "pointer",
+        marginBottom: -1,
+      }}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", fontFamily: FF.sans, color: "#e8e0d0" }}>
@@ -232,243 +303,289 @@ export default function ProfilePage() {
             </div>
           </div>
           <p style={{ margin: "14px 0 0", fontSize: 12, color: "#666", maxWidth: 720, lineHeight: 1.55 }}>
-            Taste notes and your &ldquo;month like you&rdquo; refresh with the calendar month (and a weekly key for the stretch pick). Use
-            Regenerate if you want a new take without waiting.
+            Taste notes and your &ldquo;month like you&rdquo; update when the calendar month changes (cached so we don&apos;t spam the AI).
           </p>
         </div>
       </header>
 
       <main style={{ maxWidth: 1240, margin: "0 auto", padding: "24px clamp(20px, 4vw, 40px) 48px" }}>
-        <div style={{ ...card, marginBottom: 20 }}>
-          <p style={{ margin: 0, fontSize: 11, fontFamily: FF.mono, color: "#666", letterSpacing: "0.1em" }}>
-            SIGNED IN AS
-          </p>
-          <p style={{ margin: "6px 0 0", fontSize: 15, color: "#ddd" }}>{profile?.email}</p>
-          {profile?.createdAt && (
-            <p style={{ margin: "8px 0 0", fontSize: 12, color: "#555" }}>
-              Member since {new Date(profile.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short" })}
-            </p>
-          )}
-          {stats && (
-            <p style={{ margin: "14px 0 0", fontSize: 13, color: "#9a9a9a" }}>
-              <strong style={{ color: "#c9c2b4" }}>{formatMinutes(stats.totalMinutesWatched)}</strong> logged
-              {stats.movieCount != null && (
-                <>
-                  {" "}
-                  · {stats.movieCount} films, {stats.seriesCount} series
-                </>
-              )}
-            </p>
-          )}
+        <div style={{ borderBottom: "1px solid #222", marginBottom: 24 }}>
+          {tabBtn("profile", "Profile")}
+          {tabBtn("settings", "Settings")}
         </div>
 
-        <h2 style={{ fontFamily: FF.display, fontSize: 22, fontWeight: 400, margin: "28px 0 14px", color: "#eae6dc" }}>
-          Watch-time badges
-        </h2>
-        <p style={{ fontSize: 12, color: "#666", margin: "0 0 16px", maxWidth: 640 }}>
-          Unlocks based on total runtime in your library (movies use TMDB runtime; series use episode length × episodes when both exist).
-        </p>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-            gap: 12,
-            marginBottom: 28,
-          }}
-        >
-          {(insightsData?.badges || []).map(({ badge, unlocked }) => (
-            <div
-              key={badge.id}
-              style={{
-                border: `1px solid ${unlocked ? "rgba(229, 9, 20, 0.35)" : "#252525"}`,
-                borderRadius: 10,
-                padding: "14px 16px",
-                background: unlocked ? "rgba(229, 9, 20, 0.06)" : "#0d0d0d",
-                opacity: unlocked ? 1 : 0.55,
-              }}
-            >
-              <p style={{ margin: 0, fontSize: 10, fontFamily: FF.mono, color: unlocked ? "#e50914" : "#444", letterSpacing: "0.08em" }}>
-                {unlocked ? "UNLOCKED" : "LOCKED"}
-              </p>
-              <p style={{ margin: "8px 0 4px", fontSize: 14, fontWeight: 600, color: unlocked ? "#f5f0e8" : "#777" }}>{badge.title}</p>
-              <p style={{ margin: 0, fontSize: 11, color: "#777", lineHeight: 1.45 }}>{badge.blurb}</p>
-              <p style={{ margin: "10px 0 0", fontSize: 10, color: "#555", fontFamily: FF.mono }}>
-                ≥ {formatMinutes(badge.minMinutes)}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
-          <h2 style={{ fontFamily: FF.display, fontSize: 22, fontWeight: 400, margin: 0, color: "#eae6dc" }}>
-            Taste profile &amp; blind spots
-          </h2>
-          <button
-            type="button"
-            disabled={regenBusy || !insightsData?.llmConfigured}
-            onClick={regenerate}
-            style={{
-              fontSize: 10,
-              fontFamily: FF.mono,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: insightsData?.llmConfigured ? "#8a8a8a" : "#444",
-              background: "transparent",
-              border: "1px solid #333",
-              padding: "8px 14px",
-              borderRadius: 6,
-              cursor: insightsData?.llmConfigured && !regenBusy ? "pointer" : "not-allowed",
-            }}
-          >
-            {regenBusy ? "Working…" : "Regenerate"}
-          </button>
-        </div>
-
-        {insightsData?.llmError && (
-          <p style={{ fontSize: 12, color: "#a77", marginBottom: 12 }}>{insightsData.llmError}</p>
-        )}
-        {insightsErr && <p style={{ fontSize: 12, color: "#a77", marginBottom: 12 }}>{insightsErr}</p>}
-
-        {insightsData && !insights && !insightsData?.emptyLibrary && (
-          <div style={{ ...card, color: "#888" }}>
-            {insightsData.llmConfigured === false
-              ? "Configure Groq or Ollama to generate taste insights."
-              : insightsData.llmError || "Insights unavailable — try Regenerate."}
-          </div>
-        )}
-        {!insightsData && (
-          <div style={{ ...card, color: "#888" }}>Loading insights…</div>
-        )}
-
-        {insights && (
+        {activeTab === "profile" && (
           <>
-            <div style={card}>
-              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, color: "#d5cec2" }}>{insights.tasteSummary}</p>
-              <ul style={{ margin: "14px 0 0", paddingLeft: 18, color: "#9a9a9a", fontSize: 13, lineHeight: 1.5 }}>
-                {(insights.patternBullets || []).map((b, i) => (
-                  <li key={i}>{b}</li>
-                ))}
-              </ul>
-              <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid #1a1a1a" }}>
-                <p style={{ margin: 0, fontSize: 11, fontFamily: FF.mono, color: "#e50914", letterSpacing: "0.08em" }}>BLIND SPOT</p>
-                <p style={{ margin: "8px 0 0", fontSize: 13, color: "#bbb" }}>{insights.blindSpot}</p>
-                <p style={{ margin: "14px 0 0", fontSize: 11, fontFamily: FF.mono, color: "#8a8a8a", letterSpacing: "0.08em" }}>THIS WEEK&apos;S STRETCH</p>
-                <p style={{ margin: "8px 0 0", fontSize: 13, color: "#bbb" }}>{insights.stretchGoal}</p>
-                {insights.entryPick?.title && (
-                  <>
-                    <p style={{ margin: "14px 0 0", fontSize: 11, fontFamily: FF.mono, color: "#6a9a6a", letterSpacing: "0.08em" }}>
-                      ENTRY-LEVEL PICK
-                    </p>
-                    <p style={{ margin: "8px 0 0", fontSize: 14, color: "#e8e0d0" }}>
-                      <strong>{insights.entryPick.title}</strong>
-                      <span style={{ color: "#666", fontSize: 12 }}> ({insights.entryPick.mediaType})</span>
-                    </p>
-                    <p style={{ margin: "6px 0 0", fontSize: 12, color: "#888" }}>{insights.entryPick.why}</p>
-                  </>
-                )}
-              </div>
-              {(insightsData?.fromCache && insightsData?.cachedAt) || insightsData?.weekKey ? (
-                <p style={{ margin: "14px 0 0", fontSize: 10, color: "#444", fontFamily: FF.mono }}>
-                  Week key {insightsData.weekKey}
-                  {insightsData.monthKey ? ` · Month key ${insightsData.monthKey}` : ""}
-                  {insightsData.staleFallback ? " · showing last good cache after error" : ""}
+            <div style={{ ...card, marginBottom: 20 }}>
+              <p style={{ margin: 0, fontSize: 11, fontFamily: FF.mono, color: "#666", letterSpacing: "0.1em" }}>
+                SIGNED IN AS
+              </p>
+              <p style={{ margin: "6px 0 0", fontSize: 15, color: "#ddd" }}>{profile?.email}</p>
+              {profile?.name && (
+                <p style={{ margin: "6px 0 0", fontSize: 13, color: "#888" }}>
+                  Name: <span style={{ color: "#c9c2b4" }}>{profile.name}</span>
                 </p>
-              ) : null}
+              )}
+              {profile?.createdAt && (
+                <p style={{ margin: "8px 0 0", fontSize: 12, color: "#555" }}>
+                  Member since {new Date(profile.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short" })}
+                </p>
+              )}
+              {stats && (
+                <p style={{ margin: "14px 0 0", fontSize: 13, color: "#9a9a9a" }}>
+                  <strong style={{ color: "#c9c2b4" }}>{formatMinutes(stats.totalMinutesWatched)}</strong> logged
+                  {stats.movieCount != null && (
+                    <>
+                      {" "}
+                      · {stats.movieCount} films, {stats.seriesCount} series
+                    </>
+                  )}
+                </p>
+              )}
             </div>
 
             <h2 style={{ fontFamily: FF.display, fontSize: 22, fontWeight: 400, margin: "28px 0 14px", color: "#eae6dc" }}>
-              The month that&apos;s basically you
+              Your watch-time rank
             </h2>
-            <div style={{ ...card, background: "linear-gradient(145deg, #141008 0%, #0f0f12 100%)", borderColor: "#2a2520" }}>
-              <p style={{ margin: 0, fontSize: 42, lineHeight: 1, fontFamily: FF.display, color: "#f0e8dc" }}>
-                {insights.symbolicMonth?.name || "—"}
-              </p>
-              <p style={{ margin: "12px 0 0", fontSize: 15, fontStyle: "italic", color: "#c4b8a8" }}>
-                {insights.symbolicMonth?.tagline}
-              </p>
-              <p style={{ margin: "14px 0 0", fontSize: 13, lineHeight: 1.55, color: "#9a9a9a" }}>{insights.symbolicMonth?.whyChosen}</p>
-              <p style={{ margin: "16px 0 0", fontSize: 11, color: "#555" }}>
-                Picked for this rotation ({insightsData?.monthKey}) — your stats, one calendar month as a personality.
-              </p>
+            <p style={{ fontSize: 12, color: "#666", margin: "0 0 16px", maxWidth: 640 }}>
+              One rank at a time, based on total runtime in your library (movies: TMDB runtime; series: episode length × episodes when both
+              exist).
+            </p>
+            {currentBadge && (
+              <div
+                style={{
+                  ...card,
+                  border: "1px solid rgba(229, 9, 20, 0.35)",
+                  background: "rgba(229, 9, 20, 0.06)",
+                  maxWidth: 480,
+                }}
+              >
+                <p style={{ margin: 0, fontSize: 10, fontFamily: FF.mono, color: "#e50914", letterSpacing: "0.08em" }}>CURRENT BADGE</p>
+                <p style={{ margin: "10px 0 6px", fontSize: 20, fontWeight: 600, color: "#f5f0e8", fontFamily: FF.display }}>{currentBadge.title}</p>
+                <p style={{ margin: 0, fontSize: 13, color: "#9a9a9a", lineHeight: 1.5 }}>{currentBadge.blurb}</p>
+                <p style={{ margin: "12px 0 0", fontSize: 10, color: "#555", fontFamily: FF.mono }}>
+                  Unlocks at ≥ {formatMinutes(currentBadge.minMinutes)} watched
+                </p>
+              </div>
+            )}
+
+            <div style={{ marginTop: 28 }}>
+              <h2 style={{ fontFamily: FF.display, fontSize: 22, fontWeight: 400, margin: "0 0 12px", color: "#eae6dc" }}>
+                Taste profile &amp; blind spots
+              </h2>
+
+              {insightsData?.llmError && (
+                <p style={{ fontSize: 12, color: "#a77", marginBottom: 12 }}>{insightsData.llmError}</p>
+              )}
+              {insightsErr && <p style={{ fontSize: 12, color: "#a77", marginBottom: 12 }}>{insightsErr}</p>}
+
+              {insightsData && !insights && !insightsData?.emptyLibrary && (
+                <div style={{ ...card, color: "#888" }}>
+                  {insightsData.llmConfigured === false
+                    ? "Configure Groq or Ollama to generate taste insights."
+                    : insightsData.llmError || "Insights unavailable."}
+                </div>
+              )}
+              {!insightsData && <div style={{ ...card, color: "#888" }}>Loading insights…</div>}
+
+              {insights && (
+                <>
+                  <div style={card}>
+                    <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, color: "#d5cec2" }}>{insights.tasteSummary}</p>
+                    <ul style={{ margin: "14px 0 0", paddingLeft: 18, color: "#9a9a9a", fontSize: 13, lineHeight: 1.5 }}>
+                      {(insights.patternBullets || []).map((b, i) => (
+                        <li key={i}>{b}</li>
+                      ))}
+                    </ul>
+                    <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid #1a1a1a" }}>
+                      <p style={{ margin: 0, fontSize: 11, fontFamily: FF.mono, color: "#e50914", letterSpacing: "0.08em" }}>BLIND SPOT</p>
+                      <p style={{ margin: "8px 0 0", fontSize: 13, color: "#bbb" }}>{insights.blindSpot}</p>
+                      <p style={{ margin: "14px 0 0", fontSize: 11, fontFamily: FF.mono, color: "#8a8a8a", letterSpacing: "0.08em" }}>
+                        THIS WEEK&apos;S STRETCH
+                      </p>
+                      <p style={{ margin: "8px 0 0", fontSize: 13, color: "#bbb" }}>{insights.stretchGoal}</p>
+                      {insights.entryPick?.title && (
+                        <>
+                          <p style={{ margin: "14px 0 0", fontSize: 11, fontFamily: FF.mono, color: "#6a9a6a", letterSpacing: "0.08em" }}>
+                            ENTRY-LEVEL PICK
+                          </p>
+                          <p style={{ margin: "8px 0 0", fontSize: 14, color: "#e8e0d0" }}>
+                            <strong>{insights.entryPick.title}</strong>
+                            <span style={{ color: "#666", fontSize: 12 }}> ({insights.entryPick.mediaType})</span>
+                          </p>
+                          <p style={{ margin: "6px 0 0", fontSize: 12, color: "#888" }}>{insights.entryPick.why}</p>
+                        </>
+                      )}
+                    </div>
+                    {(insightsData?.fromCache && insightsData?.cachedAt) || insightsData?.weekKey ? (
+                      <p style={{ margin: "14px 0 0", fontSize: 10, color: "#444", fontFamily: FF.mono }}>
+                        Week key {insightsData.weekKey}
+                        {insightsData.monthKey ? ` · Month key ${insightsData.monthKey}` : ""}
+                        {insightsData.staleFallback ? " · showing last good cache after error" : ""}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <h2 style={{ fontFamily: FF.display, fontSize: 22, fontWeight: 400, margin: "28px 0 14px", color: "#eae6dc" }}>
+                    The month that&apos;s basically you
+                  </h2>
+                  <div style={{ ...card, background: "linear-gradient(145deg, #141008 0%, #0f0f12 100%)", borderColor: "#2a2520" }}>
+                    <p style={{ margin: 0, fontSize: 42, lineHeight: 1, fontFamily: FF.display, color: "#f0e8dc" }}>
+                      {insights.symbolicMonth?.name || "—"}
+                    </p>
+                    <p style={{ margin: "12px 0 0", fontSize: 15, fontStyle: "italic", color: "#c4b8a8" }}>
+                      {insights.symbolicMonth?.tagline}
+                    </p>
+                    <p style={{ margin: "14px 0 0", fontSize: 13, lineHeight: 1.55, color: "#9a9a9a" }}>{insights.symbolicMonth?.whyChosen}</p>
+                    <p style={{ margin: "16px 0 0", fontSize: 11, color: "#555" }}>
+                      Picked for this rotation ({insightsData?.monthKey}) — your stats, one calendar month as a personality.
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </>
         )}
 
-        <h2 style={{ fontFamily: FF.display, fontSize: 22, fontWeight: 400, margin: "36px 0 14px", color: "#eae6dc" }}>Settings</h2>
-        <div style={card}>
-          <label style={{ display: "block", marginBottom: 16 }}>
-            <span style={{ display: "block", fontSize: 11, fontFamily: FF.mono, color: "#777", marginBottom: 6 }}>DISPLAY NAME</span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="How should we greet you?"
-              style={{
-                width: "100%",
-                maxWidth: 400,
-                boxSizing: "border-box",
-                background: "#0f0f0f",
-                border: "1px solid #2a2a2a",
-                color: "#e8e0d0",
-                padding: "10px 14px",
-                fontSize: 14,
-                fontFamily: FF.sans,
-                borderRadius: 6,
-              }}
-            />
-          </label>
+        {activeTab === "settings" && (
+          <>
+            <div style={card}>
+              <h3 style={{ margin: "0 0 14px", fontSize: 14, fontFamily: FF.mono, color: "#888", letterSpacing: "0.1em" }}>DISPLAY NAME</h3>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="How should we greet you?"
+                style={{ ...inputCss, marginBottom: 12 }}
+              />
+              <button
+                type="button"
+                onClick={saveName}
+                disabled={nameBusy}
+                style={{
+                  background: "#2a2a2a",
+                  border: "1px solid #3a3a3a",
+                  color: "#e8e0d0",
+                  padding: "10px 20px",
+                  fontSize: 12,
+                  fontFamily: FF.mono,
+                  letterSpacing: "0.08em",
+                  borderRadius: 6,
+                  cursor: nameBusy ? "wait" : "pointer",
+                }}
+              >
+                {nameBusy ? "Saving…" : "Save name"}
+              </button>
+              {nameMsg && (
+                <span style={{ marginLeft: 12, fontSize: 12, color: nameMsg === "Saved." ? "#6a8a6a" : "#c88" }}>{nameMsg}</span>
+              )}
+            </div>
 
-          <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, cursor: "pointer" }}>
-            <input type="checkbox" checked={showBadgesOnHome} onChange={(e) => setShowBadgesOnHome(e.target.checked)} />
-            <span style={{ fontSize: 13, color: "#bbb" }}>Show badge summary on the library header</span>
-          </label>
+            <div style={card}>
+              <h3 style={{ margin: "0 0 14px", fontSize: 14, fontFamily: FF.mono, color: "#888", letterSpacing: "0.1em" }}>PASSWORD</h3>
+              <label style={{ display: "block", marginBottom: 12 }}>
+                <span style={{ display: "block", fontSize: 11, fontFamily: FF.mono, color: "#666", marginBottom: 6 }}>CURRENT</span>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  style={inputCss}
+                />
+              </label>
+              <label style={{ display: "block", marginBottom: 12 }}>
+                <span style={{ display: "block", fontSize: 11, fontFamily: FF.mono, color: "#666", marginBottom: 6 }}>NEW (min 8 characters)</span>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  style={inputCss}
+                />
+              </label>
+              <label style={{ display: "block", marginBottom: 14 }}>
+                <span style={{ display: "block", fontSize: 11, fontFamily: FF.mono, color: "#666", marginBottom: 6 }}>CONFIRM NEW</span>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  style={inputCss}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={savePassword}
+                disabled={pwdBusy}
+                style={{
+                  background: "#e50914",
+                  border: "none",
+                  color: "#fff",
+                  padding: "10px 22px",
+                  fontSize: 12,
+                  fontFamily: FF.mono,
+                  letterSpacing: "0.1em",
+                  borderRadius: 6,
+                  cursor: pwdBusy ? "wait" : "pointer",
+                }}
+              >
+                {pwdBusy ? "Updating…" : "Update password"}
+              </button>
+              {pwdMsg && (
+                <p style={{ margin: "12px 0 0", fontSize: 12, color: pwdMsg === "Password updated." ? "#6a8a6a" : "#c88" }}>{pwdMsg}</p>
+              )}
+            </div>
 
-          <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, cursor: "pointer", opacity: 0.5 }}>
-            <input type="checkbox" checked={weeklyDigest} onChange={(e) => setWeeklyDigest(e.target.checked)} disabled />
-            <span style={{ fontSize: 13, color: "#bbb" }}>Weekly email digest (coming soon)</span>
-          </label>
-
-          <div style={{ marginBottom: 16 }}>
-            <span style={{ display: "block", fontSize: 11, fontFamily: FF.mono, color: "#777", marginBottom: 8 }}>CHAT SPOILER HINTS (stored for later)</span>
-            <select
-              value={chatSpoilerMode}
-              onChange={(e) => setChatSpoilerMode(e.target.value)}
-              style={{
-                background: "#0f0f0f",
-                border: "1px solid #2a2a2a",
-                color: "#e8e0d0",
-                padding: "8px 12px",
-                fontSize: 13,
-                fontFamily: FF.sans,
-                borderRadius: 6,
-              }}
-            >
-              <option value="warn">Warn before big spoilers</option>
-              <option value="open">No extra spoiler filtering</option>
-            </select>
-          </div>
-
-          <button
-            type="button"
-            onClick={saveSettings}
-            disabled={saveBusy}
-            style={{
-              background: "#e50914",
-              border: "none",
-              color: "#fff",
-              padding: "10px 22px",
-              fontSize: 12,
-              fontFamily: FF.mono,
-              letterSpacing: "0.1em",
-              borderRadius: 6,
-              cursor: saveBusy ? "wait" : "pointer",
-            }}
-          >
-            {saveBusy ? "Saving…" : "Save settings"}
-          </button>
-          {saveMsg && (
-            <span style={{ marginLeft: 14, fontSize: 12, color: saveMsg === "Saved." ? "#6a8a6a" : "#c88" }}>{saveMsg}</span>
-          )}
-        </div>
+            <div style={card}>
+              <h3 style={{ margin: "0 0 14px", fontSize: 14, fontFamily: FF.mono, color: "#888", letterSpacing: "0.1em" }}>APP PREFERENCES</h3>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, cursor: "pointer" }}>
+                <input type="checkbox" checked={showBadgesOnHome} onChange={(e) => setShowBadgesOnHome(e.target.checked)} />
+                <span style={{ fontSize: 13, color: "#bbb" }}>Show current rank on the library header</span>
+              </label>
+              <div style={{ marginBottom: 16 }}>
+                <span style={{ display: "block", fontSize: 11, fontFamily: FF.mono, color: "#777", marginBottom: 8 }}>CHAT SPOILER HINTS (stored for later)</span>
+                <select
+                  value={chatSpoilerMode}
+                  onChange={(e) => setChatSpoilerMode(e.target.value)}
+                  style={{
+                    background: "#0f0f0f",
+                    border: "1px solid #2a2a2a",
+                    color: "#e8e0d0",
+                    padding: "8px 12px",
+                    fontSize: 13,
+                    fontFamily: FF.sans,
+                    borderRadius: 6,
+                    maxWidth: 400,
+                    width: "100%",
+                  }}
+                >
+                  <option value="warn">Warn before big spoilers</option>
+                  <option value="open">No extra spoiler filtering</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={savePreferences}
+                disabled={prefBusy}
+                style={{
+                  background: "#2a2a2a",
+                  border: "1px solid #3a3a3a",
+                  color: "#e8e0d0",
+                  padding: "10px 22px",
+                  fontSize: 12,
+                  fontFamily: FF.mono,
+                  letterSpacing: "0.1em",
+                  borderRadius: 6,
+                  cursor: prefBusy ? "wait" : "pointer",
+                }}
+              >
+                {prefBusy ? "Saving…" : "Save preferences"}
+              </button>
+              {prefMsg && (
+                <span style={{ marginLeft: 12, fontSize: 12, color: prefMsg === "Saved." ? "#6a8a6a" : "#c88" }}>{prefMsg}</span>
+              )}
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

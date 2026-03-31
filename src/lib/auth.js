@@ -24,12 +24,23 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.id = user.id;
+    async jwt({ token, user, trigger, session }) {
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.name = user.name ?? null;
+      }
+      if (trigger === "update" && session) {
+        if (session.name !== undefined) token.name = session.name ? String(session.name).trim() || null : null;
+      }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) session.user.id = token.id;
+      if (session.user) {
+        session.user.id = token.id;
+        if (token.email) session.user.email = token.email;
+        if (token.name !== undefined) session.user.name = token.name;
+      }
       return session;
     },
   },

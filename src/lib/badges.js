@@ -24,3 +24,13 @@ export function badgesWithUnlockState(totalMinutes) {
 export function unlockedBadgeCount(totalMinutes) {
   return badgesWithUnlockState(totalMinutes).filter((x) => x.unlocked).length;
 }
+
+/** Highest tier reached (everyone is at least First Frame). */
+export function getCurrentBadge(totalMinutes) {
+  const m = Math.max(0, Number(totalMinutes) || 0);
+  let current = WATCH_BADGES[0];
+  for (const b of WATCH_BADGES) {
+    if (m >= b.minMinutes) current = b;
+  }
+  return current;
+}

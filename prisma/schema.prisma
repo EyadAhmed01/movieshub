@@ -12,7 +12,7 @@ model User {
   email          String          @unique
   passwordHash   String
   name           String?
-  /// UI prefs: { showBadgesOnHome, weeklyDigest, chatSpoilerMode, … }
+  /// UI prefs: { showBadgesOnHome, chatSpoilerMode, … }
   preferences    Json?
   /// Cached AI taste + monthly persona; keys tasteWeekKey, monthKey, taste, month
   insightsCache  Json?
