@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { buildChatUserContext } from "@/lib/chatUserContext";
 import { llmConfigured, runMovieChat } from "@/lib/llm";
 
 const MAX_LEN = 4000;
@@ -47,7 +48,8 @@ export async function POST(request) {
   }
 
   try {
-    const reply = await runMovieChat(trimmed);
+    const libraryContext = await buildChatUserContext(session.user.id);
+    const reply = await runMovieChat(trimmed, { libraryContext });
     return NextResponse.json({ reply });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Chat failed";

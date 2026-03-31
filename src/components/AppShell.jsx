@@ -16,6 +16,7 @@ import BrandLogo from "@/components/BrandLogo";
 
 function AppShellInner({ children }) {
   const pathname = usePathname();
+  const isHome = pathname === "/";
   const { data: session } = useSession();
   const { search, setSearch } = useAppUi();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -29,6 +30,8 @@ function AppShellInner({ children }) {
   const [exportBusy, setExportBusy] = useState(false);
   const menuRef = useRef(null);
   const menuBtnRef = useRef(null);
+  const searchWrapRef = useRef(null);
+  const [searchHintsSuppressed, setSearchHintsSuppressed] = useState(false);
 
   const loadBarData = useCallback(async () => {
     try {
@@ -58,6 +61,20 @@ function AppShellInner({ children }) {
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    setSearchHintsSuppressed(false);
+  }, [search]);
+
+  useEffect(() => {
+    if (!isHome) return;
+    const onDown = (e) => {
+      if (searchWrapRef.current?.contains(e.target)) return;
+      setSearchHintsSuppressed(true);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [isHome]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -121,8 +138,6 @@ function AppShellInner({ children }) {
     }
   }, [showFlash]);
 
-  const isHome = pathname === "/";
-
   const navLinkStyle = {
     display: "block",
     padding: "12px 16px",
@@ -181,11 +196,15 @@ function AppShellInner({ children }) {
 
           <div className="app-top-bar__search-wrap">
             {isHome ? (
-              <div className="app-top-bar__search-inner">
+              <div ref={searchWrapRef} className="app-top-bar__search-inner">
                 <input
                   placeholder="Search library & TMDB…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  onFocus={() => setSearchHintsSuppressed(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setSearchHintsSuppressed(true);
+                  }}
                   aria-label="Search movies and your library"
                   className="app-top-bar__search-input"
                   style={{
@@ -204,11 +223,12 @@ function AppShellInner({ children }) {
                   }}
                 />
                 <TmdbHints
+                  id="home-tmdb-hints"
                   query={search}
                   type="movie"
                   onPick={(r) => setSearch(r.title)}
                   onOpenDetail={(r) => setSearchDetailModal({ tmdbId: r.tmdbId, mediaType: "movie" })}
-                  visible={search.trim().length >= 2}
+                  visible={search.trim().length >= 2 && !searchHintsSuppressed}
                   libraryMovies={barMovies}
                   onQuickAdd={quickAddMovieFromSearch}
                   quickAddBusyTmdbId={quickAddBusyTmdbId}

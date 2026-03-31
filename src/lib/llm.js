@@ -1,4 +1,4 @@
-const MOVIE_BOT_SYSTEM = `You are "Mr Potato", a friendly expert on films and television series. You answer questions about plots, directors, actors, awards, trivia, recommendations in general (not personal account data unless the user pastes it), and where to watch when you know it.
+const MOVIE_BOT_BASE = `You are "Mr Potato", a friendly expert on films and television series. You answer questions about plots, directors, actors, awards, trivia, recommendations, and where to watch when you know it.
 
 Rules:
 - Stay on topic: movies, TV series, streaming, cinema history, and closely related culture.
@@ -7,23 +7,45 @@ Rules:
 - Keep answers concise unless the user asks for depth. Use short paragraphs or bullet lists when helpful.
 - Do not claim to browse the live web unless tools are provided; you rely on your training knowledge.`;
 
-export function movieChatSystemPrompt() {
-  return MOVIE_BOT_SYSTEM;
+/**
+ * @param {string} [userDataBlock] — formatted library + profile from the server (empty = no personal data)
+ */
+export function movieChatSystemPrompt(userDataBlock = "") {
+  const block = String(userDataBlock || "").trim();
+  if (!block) {
+    return `${MOVIE_BOT_BASE}
+
+You do not have this user’s Rotten Potatoes library in this session. For questions about their own list or ratings, say you can’t see their tracker and suggest they use the in-app library or Mr Potato with a signed-in session.`;
+  }
+  return `${MOVIE_BOT_BASE}
+
+The following block is a snapshot from THIS USER’s Rotten Potatoes account. It is the only source of truth for their library, ratings, and tracker stats.
+- Titles under MOVIES or SERIES are in their library.
+- "your rating X/10" is their score. "no rating yet" means no score entered (title is still on their list).
+- If a title does not appear, it is not in this tracker (you may still discuss the work from general knowledge).
+- Watch time and badge are estimates from runtimes/episodes in the data.
+- Do not invent rows, ratings, or private fields beyond this block.
+
+--- USER DATA ---
+${block}
+--- END USER DATA ---`;
 }
 
 /**
  * @param {{ role: string; content: string }[]} messages
+ * @param {{ libraryContext?: string }} [options]
  * @returns {Promise<string>}
  */
-export async function runMovieChat(messages) {
+export async function runMovieChat(messages, options = {}) {
+  const system = movieChatSystemPrompt(options.libraryContext || "");
   const provider = (process.env.LLM_PROVIDER || "groq").toLowerCase();
   if (provider === "ollama") {
-    return runOllamaChat(messages);
+    return runOllamaChat(messages, system);
   }
-  return runGroqChat(messages);
+  return runGroqChat(messages, system);
 }
 
-async function runGroqChat(messages) {
+async function runGroqChat(messages, systemPrompt) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     throw new Error("GROQ_API_KEY is not set (or set LLM_PROVIDER=ollama for local Llama).");
@@ -37,7 +59,7 @@ async function runGroqChat(messages) {
     },
     body: JSON.stringify({
       model,
-      messages: [{ role: "system", content: movieChatSystemPrompt() }, ...messages],
+      messages: [{ role: "system", content: systemPrompt }, ...messages],
       temperature: 0.55,
       max_tokens: 1024,
     }),
@@ -52,7 +74,7 @@ async function runGroqChat(messages) {
   return String(text).trim();
 }
 
-async function runOllamaChat(messages) {
+async function runOllamaChat(messages, systemPrompt) {
   const base = (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
   const model = process.env.OLLAMA_MODEL || "llama3.2";
   const res = await fetch(`${base}/api/chat`, {
@@ -60,7 +82,7 @@ async function runOllamaChat(messages) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model,
-      messages: [{ role: "system", content: movieChatSystemPrompt() }, ...messages],
+      messages: [{ role: "system", content: systemPrompt }, ...messages],
       stream: false,
       options: { temperature: 0.55 },
     }),

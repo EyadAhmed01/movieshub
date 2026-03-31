@@ -40,6 +40,7 @@ export function findLibrarySeries(series, r) {
 }
 
 export default function TmdbHints({
+  id,
   query,
   type,
   onPick,
@@ -122,7 +123,9 @@ export default function TmdbHints({
 
   return (
     <ul
+      id={id}
       className="tmdb-search-hints"
+      role="listbox"
       style={{
         listStyle: "none",
         padding: 0,

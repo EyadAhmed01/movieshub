@@ -119,7 +119,8 @@ export default function MovieChat() {
               MR POTATO
             </p>
             <p style={{ margin: "6px 0 0", fontSize: 12, color: "#9a9088", lineHeight: 1.4 }}>
-              Your AI spud for movies &amp; series. Not connected to your library unless you paste titles.
+              Each reply uses a fresh snapshot of your library and profile (ratings, lists, rough watch time). Ask
+              whether you logged a title, your counts, or general film trivia.
             </p>
           </div>
 
@@ -135,7 +136,7 @@ export default function MovieChat() {
           >
             {messages.length === 0 && (
               <p style={{ fontSize: 12, color: "#5a524a", margin: 0, lineHeight: 1.5 }}>
-                Try: &ldquo;What should I watch if I liked Arrival?&rdquo; or &ldquo;Who directed The Prestige?&rdquo;
+                Try: &ldquo;Did I add The Prestige?&rdquo; or &ldquo;What should I watch if I liked Arrival?&rdquo;
               </p>
             )}
             {messages.map((m, i) => (
