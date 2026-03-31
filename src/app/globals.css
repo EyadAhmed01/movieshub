@@ -365,12 +365,11 @@ body {
   }
 }
 
-.tracker-page-animate {
-  animation: tracker-fade-in 0.5s ease-out forwards;
-}
-
+/* Page chrome: no enter animation (avoids flash on every navigation). */
+.tracker-page-animate,
 .tracker-header-animate {
-  animation: tracker-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 1;
+  animation: none;
 }
 
 /* Rows: no staggered fade-in (was read as “flashing” on long lists). */
@@ -379,12 +378,10 @@ body {
   animation: none;
 }
 
-.tracker-add-form-animate {
-  animation: tracker-fade-up 0.4s ease-out forwards;
-}
-
+.tracker-add-form-animate,
 .tracker-toast-animate {
-  animation: tracker-toast-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 1;
+  animation: none;
 }
 
 .tracker-tab {
@@ -394,9 +391,29 @@ body {
     background 0.2s ease;
 }
 
-a.rec-card-link:hover {
+button.rec-card-link:hover {
   border-color: #3a3530;
   transform: translateY(-2px);
+}
+
+@keyframes recModalFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes recModalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 /* —— What to watch? reveal —— */
@@ -424,12 +441,13 @@ a.rec-card-link:hover {
 }
 
 .wtw-card {
-  animation: wtw-glow-pulse 2.8s ease-in-out 1;
+  animation: none;
 }
 
 .wtw-reveal {
-  opacity: 0;
-  animation: wtw-reveal 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 1;
+  filter: none;
+  animation: none;
 }
 
 .wtw-reveal--1 {

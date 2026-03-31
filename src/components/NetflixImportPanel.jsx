@@ -3,16 +3,45 @@
 import { useState, useRef } from "react";
 import { FF } from "@/lib/fonts";
 
-async function postImportCsv(csv) {
+async function postImportCsv(csv, startIndex = 0) {
   const res = await fetch("/api/import/netflix", {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ csv }),
+    body: JSON.stringify({ csv, startIndex }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || res.statusText);
   return data;
+}
+
+const MAX_IMPORT_ROUNDS = 80;
+
+function mergeImportSummaries(accum, round) {
+  if (!accum) {
+    return {
+      parsedRows: round.parsedRows,
+      uniqueTitles: round.uniqueTitles,
+      batches: 1,
+      createdMovies: round.createdMovies,
+      createdSeries: round.createdSeries,
+      skippedExisting: round.skippedExisting,
+      unmatched: [...(round.unmatched || [])],
+      importComplete: round.importComplete,
+      lastNextStartIndex: round.nextStartIndex,
+    };
+  }
+  return {
+    parsedRows: accum.parsedRows,
+    uniqueTitles: accum.uniqueTitles,
+    batches: accum.batches + 1,
+    createdMovies: accum.createdMovies + round.createdMovies,
+    createdSeries: accum.createdSeries + round.createdSeries,
+    skippedExisting: accum.skippedExisting + round.skippedExisting,
+    unmatched: [...accum.unmatched, ...(round.unmatched || [])],
+    importComplete: round.importComplete,
+    lastNextStartIndex: round.nextStartIndex,
+  };
 }
 
 export default function NetflixImportPanel({ onImported }) {
@@ -33,9 +62,23 @@ export default function NetflixImportPanel({ onImported }) {
     setResult(null);
     setBusy(true);
     try {
-      const s = await postImportCsv(text);
-      setResult(s);
-      onImported?.();
+      let startIndex = 0;
+      let merged = null;
+      let rounds = 0;
+      while (rounds < MAX_IMPORT_ROUNDS) {
+        rounds += 1;
+        const s = await postImportCsv(text, startIndex);
+        merged = mergeImportSummaries(merged, s);
+        onImported?.();
+        if (s.importComplete) break;
+        startIndex = s.nextStartIndex ?? startIndex;
+        if (startIndex >= (s.uniqueTitles ?? 0)) break;
+      }
+      setResult({
+        ...merged,
+        truncated: merged ? !merged.importComplete : false,
+        stoppedEarly: Boolean(merged && !merged.importComplete),
+      });
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Import failed");
     } finally {
@@ -196,23 +239,32 @@ export default function NetflixImportPanel({ onImported }) {
             <div style={{ marginTop: 14, fontSize: 13, color: "#8a857c", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 6px", color: "#a8a298" }}>
                 Parsed <strong>{result.parsedRows}</strong> rows → <strong>{result.uniqueTitles}</strong> unique titles (after merging
-                episodes). Processed <strong>{result.processed}</strong>
-                {result.truncated
-                  ? " (max unique titles per request — import again with the same file; already-added titles are skipped)."
-                  : "."}
+                episodes).
+                {result.batches > 1 && (
+                  <>
+                    {" "}
+                    Ran <strong>{result.batches}</strong> server batches (full list scanned automatically).
+                  </>
+                )}
               </p>
               <p style={{ margin: 0 }}>
                 Added movies: <strong style={{ color: "#c8c4ba" }}>{result.createdMovies}</strong> · series:{" "}
                 <strong style={{ color: "#c8c4ba" }}>{result.createdSeries}</strong> · already in library:{" "}
                 <strong>{result.skippedExisting}</strong> · could not match: <strong>{result.unmatched?.length ?? 0}</strong>
               </p>
+              {result.stoppedEarly && (
+                <p style={{ margin: "10px 0 0", fontSize: 12, color: "#a77", lineHeight: 1.5 }}>
+                  Stopped after {MAX_IMPORT_ROUNDS} batches (safety limit). Import the same file again to continue from where the server left
+                  off.
+                </p>
+              )}
               {result.skippedExisting > 0 &&
                 result.createdMovies === 0 &&
                 result.createdSeries === 0 &&
-                (result.unmatched?.length ?? 0) === 0 && (
+                (result.unmatched?.length ?? 0) === 0 &&
+                result.importComplete && (
                   <p style={{ margin: "12px 0 0", fontSize: 12, color: "#7a7068", lineHeight: 1.5 }}>
-                    All processed titles were already linked in your library — that is normal on a second import. Click import again to
-                    process the next batch of unique shows/movies from the same file.
+                    Every deduped title from this file is already in your library — nothing new to add.
                   </p>
                 )}
               {result.unmatched?.length > 0 && (

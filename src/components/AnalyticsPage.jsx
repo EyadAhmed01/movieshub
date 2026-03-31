@@ -6,10 +6,16 @@ import { useSession, signOut } from "next-auth/react";
 import { FF } from "@/lib/fonts";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w92";
+const TMDB_FACE = "https://image.tmdb.org/t/p/w92";
 
 function posterSrc(posterPath) {
   if (!posterPath) return null;
   return `${TMDB_IMG}${posterPath}`;
+}
+
+function faceSrc(profilePath) {
+  if (!profilePath) return null;
+  return `${TMDB_FACE}${profilePath}`;
 }
 
 async function apiJson(url, options = {}) {
@@ -160,9 +166,9 @@ export default function AnalyticsPage() {
                   fontFamily: FF.mono,
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
-                  color: "#c8c4ba",
+                  color: "#8a8a8a",
                   textDecoration: "none",
-                  border: "1px solid #4a3030",
+                  border: "1px solid #333",
                   padding: "8px 12px",
                   borderRadius: 6,
                 }}
@@ -333,14 +339,23 @@ function RankedList({ title, subtitle, empty, items, isMovie }) {
               borderBottom: i < items.length - 1 ? "1px solid #1a1a1a" : "none",
             }}
           >
-            {row.posterPath ? (
+            {row.count != null && row.profilePath ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={faceSrc(row.profilePath)}
+                alt=""
+                width={44}
+                height={44}
+                style={{ objectFit: "cover", borderRadius: "50%", flexShrink: 0, border: "1px solid #2a2a2a" }}
+              />
+            ) : row.posterPath ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={posterSrc(row.posterPath)} alt="" width={40} height={60} style={{ objectFit: "cover", borderRadius: 4 }} />
             ) : (
               <span
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   borderRadius: "50%",
                   background: "#1f1f1f",
                   display: "flex",
@@ -352,7 +367,7 @@ function RankedList({ title, subtitle, empty, items, isMovie }) {
                   flexShrink: 0,
                 }}
               >
-                {String(i + 1).padStart(2, "0")}
+                {row.count != null ? row.name?.slice(0, 1)?.toUpperCase() ?? "?" : String(i + 1).padStart(2, "0")}
               </span>
             )}
             <div style={{ flex: 1, minWidth: 0 }}>

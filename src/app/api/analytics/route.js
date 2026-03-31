@@ -66,16 +66,26 @@ export async function GET() {
     for (const c of castForStats(m.cast)) {
       const k = actorKey(c);
       const prev = actorCounts.get(k);
-      if (prev) prev.count += 1;
-      else actorCounts.set(k, { name: c.name, id: c.id ?? null, count: 1 });
+      const path = c.profilePath && typeof c.profilePath === "string" ? c.profilePath : null;
+      if (prev) {
+        prev.count += 1;
+        if (!prev.profilePath && path) prev.profilePath = path;
+      } else {
+        actorCounts.set(k, { name: c.name, id: c.id ?? null, count: 1, profilePath: path });
+      }
     }
   }
   for (const s of series) {
     for (const c of castForStats(s.cast)) {
       const k = actorKey(c);
       const prev = actorCounts.get(k);
-      if (prev) prev.count += 1;
-      else actorCounts.set(k, { name: c.name, id: c.id ?? null, count: 1 });
+      const path = c.profilePath && typeof c.profilePath === "string" ? c.profilePath : null;
+      if (prev) {
+        prev.count += 1;
+        if (!prev.profilePath && path) prev.profilePath = path;
+      } else {
+        actorCounts.set(k, { name: c.name, id: c.id ?? null, count: 1, profilePath: path });
+      }
     }
   }
 

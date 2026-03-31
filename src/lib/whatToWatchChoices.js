@@ -1,14 +1,13 @@
-export const WTW_MOODS = [
-  "Cozy & comfort",
-  "Laugh out loud",
-  "On the edge (thriller)",
-  "Big feelings (drama)",
-  "Mind-bending",
-  "Hopeful / uplifting",
-  "Dark & moody",
-  "Nostalgic",
-  "Adrenaline rush",
-];
+export const WTW_MOODS = ["Very sad", "Sad", "Neutral", "Happy", "Very happy"];
+
+/** Shown on buttons; API / LLM still receive the English mood string. */
+export const WTW_MOOD_EMOJI = {
+  "Very sad": "😫",
+  Sad: "☹️",
+  Neutral: "😐",
+  Happy: "🙂",
+  "Very happy": "🤩",
+};
 
 export const WTW_GENRES = [
   "Action",
@@ -30,7 +29,7 @@ export const WTW_FORMATS = ["Movie", "TV series", "Either"];
 export const WTW_TONES = ["Light & easy", "Balanced", "Deep & heavy"];
 
 export const WTW_LABELS = {
-  mood: "What's your mood?",
+  mood: "How do you feel?",
   genre: "What genre do you want?",
   format: "Movie or series?",
   tone: "Light or deep content?",

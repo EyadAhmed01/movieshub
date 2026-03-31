@@ -20,6 +20,7 @@ export async function POST(request) {
   }
 
   let csvText = "";
+  let startIndex = 0;
   const ct = request.headers.get("content-type") || "";
 
   if (ct.includes("multipart/form-data")) {
@@ -32,10 +33,16 @@ export async function POST(request) {
       const t = form.get("csv");
       if (typeof t === "string") csvText = t;
     }
+    const si = form.get("startIndex");
+    if (si != null) startIndex = Math.max(0, parseInt(String(si), 10) || 0);
   } else {
     try {
       const body = await request.json();
       if (typeof body?.csv === "string") csvText = body.csv;
+      if (body?.startIndex != null) {
+        const n = Number(body.startIndex);
+        if (Number.isFinite(n)) startIndex = Math.max(0, Math.floor(n));
+      }
     } catch {
       return NextResponse.json({ error: "Send JSON { csv: \"...\" } or multipart file field \"file\"." }, { status: 400 });
     }
@@ -50,7 +57,7 @@ export async function POST(request) {
   }
 
   try {
-    const summary = await importNetflixCsvForUser(prisma, session.user.id, csvText);
+    const summary = await importNetflixCsvForUser(prisma, session.user.id, csvText, { startIndex });
     return NextResponse.json(summary);
   } catch (e) {
     console.error(e);

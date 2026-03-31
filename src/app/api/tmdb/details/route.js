@@ -11,13 +11,16 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") === "tv" ? "tv" : "movie";
   const id = Number(searchParams.get("id"));
+  const extended = searchParams.get("extended") === "1";
   if (!Number.isFinite(id)) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
+  const fetchOpts = extended ? { castLimit: 14, richCast: true } : {};
+
   try {
     if (type === "movie") {
-      const d = await fetchMovieByTmdbId(id);
+      const d = await fetchMovieByTmdbId(id, fetchOpts);
       if (!d) return NextResponse.json({ error: "Not found" }, { status: 404 });
       return NextResponse.json({
         detail: {
@@ -36,7 +39,7 @@ export async function GET(request) {
         },
       });
     }
-    const d = await fetchTvByTmdbId(id);
+    const d = await fetchTvByTmdbId(id, fetchOpts);
     if (!d) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const yearStart = d.years ? parseInt(String(d.years), 10) : null;
     return NextResponse.json({

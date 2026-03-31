@@ -89,27 +89,47 @@ export async function resolveNetflixLineToTmdb({ title, seriesPrefix, dateRaw })
   return null;
 }
 
-/** Re-run import with the same file to continue (skips titles already in your library). */
-const MAX_ITEMS_PER_REQUEST = 36;
+/**
+ * How many deduped titles to scan per HTTP request (TMDB search + optional create).
+ * Re-import used to always slice(0,36) so titles after the first 36 never ran; we now
+ * accept startIndex and advance nextStartIndex so the client can chain batches.
+ */
+const MAX_SCAN_PER_REQUEST = Math.min(
+  120,
+  Math.max(24, parseInt(process.env.NETFLIX_IMPORT_BATCH || "48", 10) || 48)
+);
 
 /**
  * @param {import('@prisma/client').PrismaClient} prisma
+ * @param {{ startIndex?: number }} [options]
  */
-export async function importNetflixCsvForUser(prisma, userId, csvText) {
+export async function importNetflixCsvForUser(prisma, userId, csvText, options = {}) {
+  const startIndex = Math.max(0, Math.floor(Number(options.startIndex) || 0));
   const parsed = parseNetflixCsv(csvText);
   const unique = dedupeNetflixRows(parsed);
-  const slice = unique.slice(0, MAX_ITEMS_PER_REQUEST);
+  const slice = unique.slice(startIndex, startIndex + MAX_SCAN_PER_REQUEST);
 
   const summary = {
     parsedRows: parsed.length,
     uniqueTitles: unique.length,
+    startIndex,
     processed: slice.length,
-    truncated: unique.length > MAX_ITEMS_PER_REQUEST,
+    nextStartIndex: startIndex,
+    importComplete: startIndex >= unique.length,
+    /** @deprecated use importComplete === false */
+    truncated: false,
     createdMovies: 0,
     createdSeries: 0,
     skippedExisting: 0,
     unmatched: [],
   };
+
+  if (slice.length === 0) {
+    summary.nextStartIndex = unique.length;
+    summary.importComplete = true;
+    summary.truncated = false;
+    return summary;
+  }
 
   for (const row of slice) {
     const resolved = await resolveNetflixLineToTmdb(row);
@@ -179,6 +199,10 @@ export async function importNetflixCsvForUser(prisma, userId, csvText) {
       summary.createdSeries += 1;
     }
   }
+
+  summary.nextStartIndex = startIndex + slice.length;
+  summary.importComplete = summary.nextStartIndex >= unique.length;
+  summary.truncated = !summary.importComplete;
 
   return summary;
 }

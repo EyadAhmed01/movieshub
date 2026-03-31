@@ -6,6 +6,8 @@ import { useSession, signOut } from "next-auth/react";
 import { FF } from "@/lib/fonts";
 import MovieChat from "@/components/MovieChat";
 import RecommendationsRow from "@/components/RecommendationsRow";
+import RecommendationDetailModal from "@/components/RecommendationDetailModal";
+import WhatToWatchModal from "@/components/WhatToWatchModal";
 
 const POSTER_SM = "https://image.tmdb.org/t/p/w154";
 const POSTER_LG = "https://image.tmdb.org/t/p/w500";
@@ -51,6 +53,8 @@ export default function WatchlistBrowse() {
   const [listLoading, setListLoading] = useState(true);
   const [addBusy, setAddBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [listModalItem, setListModalItem] = useState(null);
+  const [wtwOpen, setWtwOpen] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q.trim()), 350);
@@ -164,6 +168,12 @@ export default function WatchlistBrowse() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", fontFamily: FF.sans, color: "#e8e0d0" }}>
+      {listModalItem && (
+        <RecommendationDetailModal item={listModalItem} onClose={() => setListModalItem(null)} />
+      )}
+      {wtwOpen && (
+        <WhatToWatchModal onClose={() => setWtwOpen(false)} onAddedToWatchlist={loadWatchlist} />
+      )}
       <header
         style={{
           borderBottom: "1px solid #181818",
@@ -227,24 +237,26 @@ export default function WatchlistBrowse() {
                   borderRadius: 6,
                 }}
               >
-                Tracker
+                ← Library
               </Link>
-              <Link
-                href="/what-to-watch"
+              <button
+                type="button"
+                onClick={() => setWtwOpen(true)}
                 style={{
                   fontSize: 10,
                   fontFamily: FF.mono,
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
-                  color: "#c8c4ba",
-                  textDecoration: "none",
-                  border: "1px solid #4a3030",
+                  color: "#8a8a8a",
+                  background: "transparent",
+                  border: "1px solid #333",
                   padding: "8px 12px",
                   borderRadius: 6,
+                  cursor: "pointer",
                 }}
               >
                 What to watch?
-              </Link>
+              </button>
               <Link
                 href="/analytics"
                 style={{
@@ -543,26 +555,46 @@ export default function WatchlistBrowse() {
                     overflow: "hidden",
                   }}
                 >
-                  <div style={{ aspectRatio: "2/3", background: "#0a0a0a" }}>
-                    {w.posterPath ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={posterSrc(w.posterPath, false)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    ) : (
-                      <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#333", fontSize: 11 }}>
-                        No poster
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setListModalItem({ tmdbId: w.tmdbId, mediaType: w.mediaType })}
+                    title="View details"
+                    className="rec-card-link"
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: 0,
+                      margin: 0,
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                      color: "inherit",
+                      font: "inherit",
+                      textAlign: "left",
+                    }}
+                  >
+                    <div style={{ aspectRatio: "2/3", background: "#0a0a0a" }}>
+                      {w.posterPath ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={posterSrc(w.posterPath, false)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#333", fontSize: 11 }}>
+                          No poster
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ padding: "10px 12px 0" }}>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, lineHeight: 1.3, color: "#eae6e0" }}>{w.title}</p>
+                      <p style={{ margin: "6px 0 0", fontSize: 10, color: "#666", fontFamily: FF.mono }}>
+                        {w.mediaType === "tv" ? w.yearsLabel || w.year : w.year} · {w.mediaType === "movie" ? "Movie" : "TV"}
+                      </p>
+                    </div>
+                  </button>
                   <div style={{ padding: "10px 12px 12px" }}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, lineHeight: 1.3, color: "#eae6e0" }}>{w.title}</p>
-                    <p style={{ margin: "6px 0 0", fontSize: 10, color: "#666", fontFamily: FF.mono }}>
-                      {w.mediaType === "tv" ? w.yearsLabel || w.year : w.year} · {w.mediaType === "movie" ? "Movie" : "TV"}
-                    </p>
                     <button
                       type="button"
                       onClick={() => removeItem(w.id)}
                       style={{
-                        marginTop: 10,
                         fontSize: 10,
                         fontFamily: FF.mono,
                         letterSpacing: "0.1em",

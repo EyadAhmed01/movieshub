@@ -82,8 +82,8 @@ export function llmConfigured() {
 
 const CAST_JSON_SYSTEM = `You output ONLY a JSON array. No markdown, no explanation.
 Each element must be like {"name":"Actor Full Name"}.
-Return at most 3 names: only the top-billed leads (stars), not supporting cast.
-If you are not confident of the three biggest roles for this exact title, output [].
+Return only top-billed leads (stars), not day players; keep the count within the user's limit.
+If you are not confident of real principal cast for this exact title, output [].
 Never invent obscure credits; prefer [] over guessing.`;
 
 function stripJsonFence(s) {
@@ -97,12 +97,13 @@ function stripJsonFence(s) {
  * LLM fallback when TMDB has no cast. Names may be wrong — mark inferred in DB.
  * @returns {Promise<{ name: string, id: null, inferred: true }[]>}
  */
-export async function inferPrincipalCast({ title, year, mediaType }) {
+export async function inferPrincipalCast({ title, year, mediaType, maxNames = 3 }) {
+  const cap = Math.min(12, Math.max(1, Number(maxNames) || 3));
   const kind = mediaType === "tv" ? "TV series" : "film";
   const yHint =
     year != null && Number.isFinite(Number(year)) ? ` Release / first-air year hint: ${year}.` : "";
   const user = `Work: "${title}" (${kind}).${yHint}
-Return JSON array of at most 3 names — only the top-billed star leads (e.g. [{"name":"..."},{"name":"..."},{"name":"..."}]). Fewer than 3 is OK if unsure. If unknown return [].`;
+Return JSON array of at most ${cap} names — only top-billed principal cast (e.g. [{"name":"..."}]). Fewer is OK if unsure. If unknown return [].`;
 
   const provider = (process.env.LLM_PROVIDER || "groq").toLowerCase();
   let raw;
@@ -126,7 +127,7 @@ Return JSON array of at most 3 names — only the top-billed star leads (e.g. [{
       out.push({ name: name.trim(), id: null, inferred: true });
     }
   }
-  return out.slice(0, 3);
+  return out.slice(0, cap);
 }
 
 async function runGroqJsonCompletion(system, user) {
@@ -146,7 +147,7 @@ async function runGroqJsonCompletion(system, user) {
         { role: "user", content: user },
       ],
       temperature: 0.15,
-      max_tokens: 500,
+      max_tokens: 900,
     }),
   });
   const data = await res.json().catch(() => ({}));
@@ -186,7 +187,7 @@ Keys (all required):
 - "durationGuess": approximate runtime, e.g. "2h 15m" for a film or "~22 min per episode" / "~50 min per episode" for series.
 - "description": 2–3 sentences pitching why it fits; no major spoilers.
 
-Pick exactly ONE title that fits the user's mood, genre preference, format, and tone. Use titles that exist in the real world.`;
+Pick exactly ONE title that fits the user's mood (may be an emotional scale like "Very sad" through "Very happy"), genre preference, format, and tone. Use titles that exist in the real world.`;
 
 function parseJsonObject(raw) {
   try {

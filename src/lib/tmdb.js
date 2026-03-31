@@ -14,17 +14,24 @@ export function tmdbConfigured() {
 /** How many top-billed roles we keep (TMDB `order` = billing importance, lower first). */
 export const TOP_BILLED_CAST_LIMIT = 3;
 
-function mapCast(castArr, limit = TOP_BILLED_CAST_LIMIT) {
+function mapCastCredits(castArr, limit = TOP_BILLED_CAST_LIMIT, rich = false) {
   const rows = (castArr || []).filter((c) => c?.name);
   const sorted = [...rows].sort((a, b) => {
     const oa = typeof a.order === "number" ? a.order : 9999;
     const ob = typeof b.order === "number" ? b.order : 9999;
     return oa - ob;
   });
-  return sorted.slice(0, limit).map((c) => ({
-    name: c.name,
-    id: typeof c.id === "number" ? c.id : null,
-  }));
+  return sorted.slice(0, limit).map((c) => {
+    const o = {
+      name: c.name,
+      id: typeof c.id === "number" ? c.id : null,
+    };
+    if (rich) {
+      o.profilePath = c.profile_path || null;
+      o.character = c.character || null;
+    }
+    return o;
+  });
 }
 
 function mapGenres(genres) {
@@ -39,7 +46,7 @@ export async function searchTmdb(query, type) {
   const res = await fetch(url, { next: { revalidate: 300 } });
   if (!res.ok) throw new Error(`TMDB ${res.status}`);
   const data = await res.json();
-  const list = (data.results || []).slice(0, 10).map((r) => ({
+  const list = (data.results || []).slice(0, 15).map((r) => ({
     tmdbId: r.id,
     title: type === "tv" ? r.name : r.title,
     year: (() => {
@@ -55,7 +62,13 @@ export async function searchTmdb(query, type) {
   return { results: list, configured: true };
 }
 
-export async function fetchMovieByTmdbId(tmdbId) {
+/**
+ * @param {number} tmdbId
+ * @param {{ castLimit?: number, richCast?: boolean }} [options]
+ */
+export async function fetchMovieByTmdbId(tmdbId, options = {}) {
+  const castLimit = options.castLimit ?? TOP_BILLED_CAST_LIMIT;
+  const richCast = options.richCast ?? false;
   const apiKey = key();
   if (!apiKey) return null;
   const [detailRes, creditsRes] = await Promise.all([
@@ -67,7 +80,7 @@ export async function fetchMovieByTmdbId(tmdbId) {
   let cast = [];
   if (creditsRes.ok) {
     const cr = await creditsRes.json();
-    cast = mapCast(cr.cast);
+    cast = mapCastCredits(cr.cast, castLimit, richCast);
   }
   const y = r.release_date ? new Date(r.release_date).getFullYear() : null;
   const runtime =
@@ -84,7 +97,13 @@ export async function fetchMovieByTmdbId(tmdbId) {
   };
 }
 
-export async function fetchTvByTmdbId(tmdbId) {
+/**
+ * @param {number} tmdbId
+ * @param {{ castLimit?: number, richCast?: boolean }} [options]
+ */
+export async function fetchTvByTmdbId(tmdbId, options = {}) {
+  const castLimit = options.castLimit ?? TOP_BILLED_CAST_LIMIT;
+  const richCast = options.richCast ?? false;
   const apiKey = key();
   if (!apiKey) return null;
   const [detailRes, creditsRes] = await Promise.all([
@@ -96,7 +115,7 @@ export async function fetchTvByTmdbId(tmdbId) {
   let cast = [];
   if (creditsRes.ok) {
     const cr = await creditsRes.json();
-    cast = mapCast(cr.cast);
+    cast = mapCastCredits(cr.cast, castLimit, richCast);
   }
   const start = r.first_air_date ? new Date(r.first_air_date).getFullYear() : null;
   const end = r.last_air_date ? new Date(r.last_air_date).getFullYear() : null;
@@ -186,6 +205,24 @@ export async function fetchTvSimilarAndRecommended(tmdbId) {
   };
   const [similar, recommended] = await Promise.all([parse(simRes), parse(recRes)]);
   return { similar, recommended };
+}
+
+/** First TMDB person search hit (for AI name → profile matching). */
+export async function searchTmdbPerson(query) {
+  const apiKey = key();
+  const q = String(query || "").trim();
+  if (!apiKey || !q) return null;
+  const url = `${BASE}/search/person?api_key=${apiKey}&query=${encodeURIComponent(q)}&page=1`;
+  const res = await fetch(url, { next: { revalidate: 86400 } });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const p = (data.results || [])[0];
+  if (!p?.name) return null;
+  return {
+    id: p.id,
+    name: p.name,
+    profilePath: p.profile_path || null,
+  };
 }
 
 export function posterUrl(posterPath) {

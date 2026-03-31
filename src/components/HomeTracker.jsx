@@ -7,6 +7,7 @@ import { FF } from "@/lib/fonts";
 import MovieChat from "@/components/MovieChat";
 import NetflixImportPanel from "@/components/NetflixImportPanel";
 import RecommendationsRow from "@/components/RecommendationsRow";
+import WhatToWatchModal from "@/components/WhatToWatchModal";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w92";
 
@@ -83,8 +84,29 @@ function useDebounced(value, ms) {
   return v;
 }
 
-function TmdbHints({ query, type, onPick, visible }) {
-  const q = useDebounced(query, 400);
+/** Match a TMDB search row to a saved movie (tmdbId first, then title + year). */
+function findLibraryMovie(movies, r) {
+  if (!movies?.length) return null;
+  const byTmdb = movies.find((m) => m.tmdbId != null && Number(m.tmdbId) === Number(r.tmdbId));
+  if (byTmdb) return byTmdb;
+  const t = (r.title || "").trim().toLowerCase();
+  const y = r.year;
+  if (!t) return null;
+  return movies.find((m) => m.title.trim().toLowerCase() === t && (y == null || m.year === y)) || null;
+}
+
+function TmdbHints({
+  query,
+  type,
+  onPick,
+  visible,
+  libraryMovies = [],
+  onQuickAdd,
+  quickAddBusyTmdbId = null,
+  /** "absolute" = overlay below parent (toolbar); default stacks in document flow (add form). */
+  positionDropdown = "flow",
+}) {
+  const q = useDebounced(query, 280);
   const [items, setItems] = useState([]);
   const [configured, setConfigured] = useState(true);
 
@@ -120,61 +142,168 @@ function TmdbHints({ query, type, onPick, visible }) {
     return null;
   }
 
+  const isMovie = type === "movie";
+  const showLibrary = isMovie && Array.isArray(libraryMovies);
+  const quickAddEnabled = showLibrary && typeof onQuickAdd === "function";
+
+  const dropPos =
+    positionDropdown === "absolute"
+      ? {
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: "calc(100% + 6px)",
+          zIndex: 40,
+          margin: 0,
+        }
+      : { margin: "8px 0 0" };
+
   return (
     <ul
       style={{
         listStyle: "none",
-        margin: "8px 0 0",
         padding: 0,
-        maxHeight: 220,
+        maxHeight: 320,
         overflowY: "auto",
         border: "1px solid #2a2a2a",
         borderRadius: 8,
         background: "#111",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.55)",
+        ...dropPos,
       }}
     >
-      {items.map((r) => (
-        <li key={`${r.tmdbId}`}>
-          <button
-            type="button"
-            onClick={() => onPick(r)}
+      {items.map((r) => {
+        const lib = showLibrary ? findLibraryMovie(libraryMovies, r) : null;
+        const busy = quickAddBusyTmdbId != null && quickAddBusyTmdbId === r.tmdbId;
+        return (
+          <li
+            key={`${r.tmdbId}`}
             style={{
-              width: "100%",
-              textAlign: "left",
-              display: "flex",
-              gap: 10,
-              alignItems: "center",
-              padding: "8px 10px",
-              border: "none",
               borderBottom: "1px solid #1a1a1a",
-              background: "transparent",
-              color: "#c8c4ba",
-              cursor: "pointer",
-              fontSize: 13,
-              fontFamily: FF.sans,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "8px 10px",
             }}
           >
-            {r.posterPath && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={posterSrc(r.posterPath)} alt="" width={36} height={54} style={{ objectFit: "cover" }} />
+            <button
+              type="button"
+              onClick={() => onPick(r)}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                textAlign: "left",
+                display: "flex",
+                gap: 10,
+                alignItems: "center",
+                padding: 0,
+                border: "none",
+                background: "transparent",
+                color: "#c8c4ba",
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: FF.sans,
+              }}
+            >
+              {r.posterPath && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={posterSrc(r.posterPath)} alt="" width={36} height={54} style={{ objectFit: "cover", borderRadius: 4 }} />
+              )}
+              <span style={{ flex: 1, lineHeight: 1.35, minWidth: 0 }}>
+                {r.title}
+                {r.year != null && <span style={{ color: "#555", marginLeft: 8 }}>({r.year})</span>}
+                {typeof r.voteAverage === "number" && (
+                  <span style={{ color: "#444", marginLeft: 8 }}>★ {r.voteAverage.toFixed(1)}</span>
+                )}
+              </span>
+            </button>
+            {showLibrary && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-end",
+                  gap: 6,
+                  flexShrink: 0,
+                  maxWidth: 132,
+                }}
+              >
+                {lib ? (
+                  <>
+                    <span
+                      style={{
+                        fontSize: 9,
+                        letterSpacing: "0.12em",
+                        fontFamily: FF.mono,
+                        color: "#e50914",
+                        textTransform: "uppercase",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Watched
+                    </span>
+                    <span style={{ fontSize: 13, fontFamily: FF.sans, color: "#f5f0e8", fontWeight: 500 }}>
+                      {lib.userRating != null ? `${lib.userRating}/10` : "Not rated"}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span
+                      style={{
+                        fontSize: 9,
+                        letterSpacing: "0.12em",
+                        fontFamily: FF.mono,
+                        color: "#666",
+                        textTransform: "uppercase",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Not watched
+                    </span>
+                    {quickAddEnabled && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onQuickAdd(r);
+                        }}
+                        style={{
+                          background: busy ? "#2a2a2a" : "rgba(229, 9, 20, 0.15)",
+                          border: "1px solid #8b1538",
+                          borderRadius: 6,
+                          color: busy ? "#555" : "#f5f0e8",
+                          padding: "6px 10px",
+                          fontSize: 10,
+                          fontFamily: FF.mono,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          cursor: busy ? "wait" : "pointer",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {busy ? "…" : "Add to my list"}
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
             )}
-            <span style={{ flex: 1, lineHeight: 1.35 }}>
-              {r.title}
-              {r.year != null && (
-                <span style={{ color: "#555", marginLeft: 8 }}>({r.year})</span>
-              )}
-              {typeof r.voteAverage === "number" && (
-                <span style={{ color: "#444", marginLeft: 8 }}>★ {r.voteAverage.toFixed(1)}</span>
-              )}
-            </span>
-          </button>
-        </li>
-      ))}
+          </li>
+        );
+      })}
     </ul>
   );
 }
 
-function AddForm({ type, onAdd, onCancel }) {
+function AddForm({
+  type,
+  onAdd,
+  onCancel,
+  libraryMovies = [],
+  onQuickAddMovie,
+  quickAddBusyTmdbId = null,
+}) {
   const [title, setTitle] = useState("");
   const [year, setYear] = useState(2024);
   const [yearEnd, setYearEnd] = useState("present");
@@ -266,7 +395,15 @@ function AddForm({ type, onAdd, onCancel }) {
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           style={inputStyle}
         />
-        <TmdbHints query={title} type={type === "movie" ? "movie" : "tv"} onPick={handlePick} visible={showHints} />
+        <TmdbHints
+          query={title}
+          type={type === "movie" ? "movie" : "tv"}
+          onPick={handlePick}
+          visible={showHints}
+          libraryMovies={type === "movie" ? libraryMovies : []}
+          onQuickAdd={type === "movie" ? onQuickAddMovie : undefined}
+          quickAddBusyTmdbId={quickAddBusyTmdbId}
+        />
         {type === "movie" && tmdbId != null ? (
           <div>
             <p
@@ -490,6 +627,8 @@ export default function HomeTracker() {
   const [showMovieForm, setShowMovieForm] = useState(false);
   const [showSeriesForm, setShowSeriesForm] = useState(false);
   const [flash, setFlash] = useState(null);
+  const [wtwOpen, setWtwOpen] = useState(false);
+  const [quickAddBusyTmdbId, setQuickAddBusyTmdbId] = useState(null);
 
   const showFlash = useCallback((msg) => {
     setFlash(msg);
@@ -519,15 +658,48 @@ export default function HomeTracker() {
     };
   }, [status, refreshAll]);
 
-  const addMovie = async (item) => {
+  const createMovieEntry = useCallback(async (item) => {
     const created = await apiJson("/api/movies", {
       method: "POST",
       body: JSON.stringify(item),
     });
     setMovies((prev) => [...prev, created].sort((a, b) => a.year - b.year));
-    showFlash(`"${created.title}" added to Movies`);
-    setShowMovieForm(false);
-  };
+    return created;
+  }, []);
+
+  const addMovie = useCallback(
+    async (item) => {
+      const created = await createMovieEntry(item);
+      showFlash(`"${created.title}" added to Movies`);
+      setShowMovieForm(false);
+    },
+    [createMovieEntry, showFlash]
+  );
+
+  const quickAddMovieFromSearch = useCallback(
+    async (r) => {
+      const y = r.year;
+      if (y == null || !Number.isFinite(y)) {
+        showFlash("No release year from TMDB — use Add Movie to set the year.");
+        return;
+      }
+      setQuickAddBusyTmdbId(r.tmdbId);
+      try {
+        const created = await createMovieEntry({
+          title: r.title,
+          year: y,
+          tmdbId: r.tmdbId,
+        });
+        showFlash(`"${created.title}" added to Movies`);
+        setShowMovieForm(false);
+      } catch (e) {
+        showFlash(e instanceof Error ? e.message : "Could not add movie");
+      } finally {
+        setQuickAddBusyTmdbId(null);
+      }
+    },
+    [createMovieEntry, showFlash]
+  );
 
   const addSeries = async (item) => {
     const created = await apiJson("/api/series", {
@@ -592,6 +764,7 @@ export default function HomeTracker() {
 
   return (
     <div className="tracker-page-animate" style={{ minHeight: "100vh", background: "#0a0a0a", fontFamily: FF.sans, color: "#e8e0d0" }}>
+      {wtwOpen && <WhatToWatchModal onClose={() => setWtwOpen(false)} />}
       <div
         className="tracker-header-animate"
         style={{
@@ -604,9 +777,10 @@ export default function HomeTracker() {
           top: 0,
           zIndex: 10,
           boxShadow: "0 12px 32px rgba(0,0,0,0.45)",
+          overflow: "visible",
         }}
       >
-        <div style={{ maxWidth: 1240, margin: "0 auto" }}>
+        <div style={{ maxWidth: 1240, margin: "0 auto", overflow: "visible" }}>
           <div className="tracker-header-top">
             <div>
               <p
@@ -682,9 +856,9 @@ export default function HomeTracker() {
                   fontFamily: FF.mono,
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
-                  color: "#e50914",
+                  color: "#8a8a8a",
                   textDecoration: "none",
-                  border: "1px solid #3a2020",
+                  border: "1px solid #333",
                   padding: "8px 12px",
                   borderRadius: 6,
                   whiteSpace: "nowrap",
@@ -692,23 +866,25 @@ export default function HomeTracker() {
               >
                 Watch next
               </Link>
-              <Link
-                href="/what-to-watch"
+              <button
+                type="button"
+                onClick={() => setWtwOpen(true)}
                 style={{
                   fontSize: 10,
                   fontFamily: FF.mono,
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
-                  color: "#c8c4ba",
-                  textDecoration: "none",
-                  border: "1px solid #4a3030",
+                  color: "#8a8a8a",
+                  background: "transparent",
+                  border: "1px solid #333",
                   padding: "8px 12px",
                   borderRadius: 6,
                   whiteSpace: "nowrap",
+                  cursor: "pointer",
                 }}
               >
                 What to watch?
-              </Link>
+              </button>
               <Link
                 href="/analytics"
                 style={{
@@ -729,23 +905,41 @@ export default function HomeTracker() {
               <span style={{ fontSize: 10, color: "#3a3a3a", fontFamily: FF.mono, letterSpacing: "0.1em" }}>
                 ☁ saved to your account
               </span>
-              <input
+              <div
                 className="tracker-search-input"
-                placeholder="Search titles…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                aria-label="Search titles"
-                style={{
-                  background: "#111",
-                  border: "1px solid #2a2a2a",
-                  color: "#e8e0d0",
-                  padding: "10px 14px",
-                  fontSize: 13,
-                  fontFamily: FF.sans,
-                  outline: "none",
-                  letterSpacing: "0.02em",
-                }}
-              />
+                style={{ position: "relative", zIndex: 12, minWidth: 0, flex: 1, maxWidth: 360 }}
+              >
+                <input
+                  placeholder="Search movies (TMDB) or filter your list…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  aria-label="Search movies and your library"
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    background: "#141414",
+                    border: "1px solid rgba(180, 20, 40, 0.9)",
+                    borderRadius: 8,
+                    color: "#e8e0d0",
+                    padding: "10px 14px",
+                    fontSize: 13,
+                    fontFamily: FF.sans,
+                    outline: "none",
+                    letterSpacing: "0.02em",
+                    boxShadow: "0 0 0 1px rgba(90, 0, 0, 0.35)",
+                  }}
+                />
+                <TmdbHints
+                  query={search}
+                  type="movie"
+                  onPick={(r) => setSearch(r.title)}
+                  visible={search.trim().length >= 2}
+                  libraryMovies={movies}
+                  onQuickAdd={quickAddMovieFromSearch}
+                  quickAddBusyTmdbId={quickAddBusyTmdbId}
+                  positionDropdown="absolute"
+                />
+              </div>
             </div>
           </div>
           <div className="tracker-tabs">
@@ -861,7 +1055,14 @@ export default function HomeTracker() {
               </div>
 
               {showMovieForm && (
-                <AddForm type="movie" onAdd={addMovie} onCancel={() => setShowMovieForm(false)} />
+                <AddForm
+                  type="movie"
+                  onAdd={addMovie}
+                  onCancel={() => setShowMovieForm(false)}
+                  libraryMovies={movies}
+                  onQuickAddMovie={quickAddMovieFromSearch}
+                  quickAddBusyTmdbId={quickAddBusyTmdbId}
+                />
               )}
 
               <div className="tracker-table-scroll">
