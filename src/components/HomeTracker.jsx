@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useAppUi } from "@/context/AppUiContext";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMagnifyingGlass, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FF } from "@/lib/fonts";
 import { apiJson } from "@/lib/api";
 import MovieChat from "@/components/MovieChat";
@@ -408,7 +409,6 @@ function TrackerGridFiller() {
 
 export default function HomeTracker() {
   const { status } = useSession();
-  const { search, setSearch } = useAppUi();
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [movies, setMovies] = useState([]);
@@ -419,6 +419,8 @@ export default function HomeTracker() {
   const [quickAddBusyTmdbId, setQuickAddBusyTmdbId] = useState(null);
   /** Same detail modal as My List / For You — `{ tmdbId, mediaType }` */
   const [libraryDetailModal, setLibraryDetailModal] = useState(null);
+  /** Filter only the watched lists below (not the header TMDB search). */
+  const [librarySearch, setLibrarySearch] = useState("");
 
   const showFlash = useCallback((msg) => {
     setFlash(msg);
@@ -562,8 +564,13 @@ export default function HomeTracker() {
 
   const sortedMovies = [...movies].sort((a, b) => a.year - b.year);
   const sortedSeries = [...series].sort((a, b) => parseInt(a.years, 10) - parseInt(b.years, 10));
-  const filteredMovies = sortedMovies.filter((m) => m.title.toLowerCase().includes(search.toLowerCase()));
-  const filteredSeries = sortedSeries.filter((s) => s.title.toLowerCase().includes(search.toLowerCase()));
+  const libQ = librarySearch.trim().toLowerCase();
+  const displayMovies = libQ
+    ? sortedMovies.filter((m) => m.title.toLowerCase().includes(libQ))
+    : sortedMovies;
+  const displaySeries = libQ
+    ? sortedSeries.filter((s) => s.title.toLowerCase().includes(libQ))
+    : sortedSeries;
   if (status === "loading" || (status === "authenticated" && loading)) {
     return (
       <div
@@ -623,36 +630,107 @@ export default function HomeTracker() {
           borderBottom: "1px solid #181818",
         }}
       >
-        <div className="tracker-tabs">
-          {[
-            { key: "all", label: "All" },
-            { key: "movies", label: `Movies (${movies.length})` },
-            { key: "series", label: `Series (${series.length})` },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              className={`tracker-tab ${filter === tab.key ? "tracker-tab--active" : ""}`}
-              onClick={() => setFilter(tab.key)}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px 16px",
+          }}
+        >
+          <div className="tracker-tabs">
+            {[
+              { key: "all", label: "All" },
+              { key: "movies", label: `Movies (${movies.length})` },
+              { key: "series", label: `Series (${series.length})` },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                className={`tracker-tab ${filter === tab.key ? "tracker-tab--active" : ""}`}
+                onClick={() => setFilter(tab.key)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  borderBottom: filter === tab.key ? "2px solid #e50914" : "2px solid transparent",
+                  color: filter === tab.key ? "#f5f0e8" : "#6a6a6a",
+                  padding: "12px 20px",
+                  fontSize: 14,
+                  letterSpacing: "0.02em",
+                  textTransform: "none",
+                  cursor: "pointer",
+                  fontFamily: FF.sans,
+                  fontWeight: filter === tab.key ? 600 : 500,
+                  transition: "color 0.18s ease, border-color 0.18s ease",
+                  marginBottom: -1,
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div
+            className="tracker-library-search"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flex: "1 1 160px",
+              minWidth: 0,
+              maxWidth: 280,
+              padding: "6px 10px",
+              borderRadius: 8,
+              border: "1px solid #2a2a2a",
+              background: "#121212",
+            }}
+          >
+            <FontAwesomeIcon
+              icon={faMagnifyingGlass}
+              style={{ width: 14, height: 14, color: "#5c5c5c", flexShrink: 0 }}
+              aria-hidden
+            />
+            <input
+              type="search"
+              value={librarySearch}
+              onChange={(e) => setLibrarySearch(e.target.value)}
+              placeholder="Your list…"
+              aria-label="Filter movies and series in your library"
+              className="tracker-library-search__input"
               style={{
-                background: "none",
+                flex: "1 1 0%",
+                minWidth: 0,
                 border: "none",
-                borderBottom: filter === tab.key ? "2px solid #e50914" : "2px solid transparent",
-                color: filter === tab.key ? "#f5f0e8" : "#6a6a6a",
-                padding: "12px 20px",
-                fontSize: 14,
-                letterSpacing: "0.02em",
-                textTransform: "none",
-                cursor: "pointer",
+                background: "transparent",
+                color: "#d8d4cc",
+                fontSize: 13,
                 fontFamily: FF.sans,
-                fontWeight: filter === tab.key ? 600 : 500,
-                transition: "color 0.18s ease, border-color 0.18s ease",
-                marginBottom: -1,
+                outline: "none",
+                padding: "4px 0",
               }}
-            >
-              {tab.label}
-            </button>
-          ))}
+            />
+            {librarySearch.length > 0 && (
+              <button
+                type="button"
+                aria-label="Clear library filter"
+                onClick={() => setLibrarySearch("")}
+                style={{
+                  flexShrink: 0,
+                  border: "none",
+                  background: "transparent",
+                  color: "#666",
+                  cursor: "pointer",
+                  padding: 4,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 4,
+                }}
+              >
+                <FontAwesomeIcon icon={faXmark} style={{ width: 12, height: 12 }} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -674,7 +752,7 @@ export default function HomeTracker() {
                   ◆ Movies
                 </span>
                 <span style={{ fontSize: 11, color: "#4a4a4a", fontFamily: FF.sans }}>
-                  {filteredMovies.length} titles
+                  {libQ ? `${displayMovies.length} match${displayMovies.length === 1 ? "" : "es"}` : `${displayMovies.length} titles`}
                 </span>
                 <button
                   type="button"
@@ -723,7 +801,7 @@ export default function HomeTracker() {
                   {colLabel("TMDB", true)}
                   <span />
                 </div>
-                {filteredMovies.map((m, i) => (
+                {displayMovies.map((m, i) => (
                   <div
                     key={m.id}
                     className={`tracker-row tracker-movie-grid tracker-movie-row tracker-row-animate${m.tmdbId ? " tracker-row--tmdb" : ""}`}
@@ -806,8 +884,10 @@ export default function HomeTracker() {
                   </button>
                 </div>
                 ))}
-                {filteredMovies.length === 0 && (
-                  <p style={{ color: "#444", fontSize: 13, fontFamily: FF.sans, padding: "24px 0" }}>No results.</p>
+                {displayMovies.length === 0 && (
+                  <p style={{ color: "#444", fontSize: 13, fontFamily: FF.sans, padding: "24px 0" }}>
+                    {libQ && sortedMovies.length > 0 ? "No movies match this filter." : "No results."}
+                  </p>
                 )}
               </div>
             </div>
@@ -829,7 +909,7 @@ export default function HomeTracker() {
                   ◆ Series
                 </span>
                 <span style={{ fontSize: 11, color: "#4a4a4a", fontFamily: FF.sans }}>
-                  {filteredSeries.length} titles
+                  {libQ ? `${displaySeries.length} match${displaySeries.length === 1 ? "" : "es"}` : `${displaySeries.length} titles`}
                 </span>
                 <button
                   type="button"
@@ -877,7 +957,7 @@ export default function HomeTracker() {
                   {colLabel("TMDB", true)}
                   <span />
                 </div>
-                {filteredSeries.map((s, i) => (
+                {displaySeries.map((s, i) => (
                   <div
                     key={s.id}
                     className={`tracker-row tracker-series-grid tracker-series-row tracker-row-animate${s.tmdbId ? " tracker-row--tmdb" : ""}`}
@@ -966,8 +1046,10 @@ export default function HomeTracker() {
                   </button>
                 </div>
                 ))}
-                {filteredSeries.length === 0 && (
-                  <p style={{ color: "#444", fontSize: 13, fontFamily: FF.sans, padding: "24px 0" }}>No results.</p>
+                {displaySeries.length === 0 && (
+                  <p style={{ color: "#444", fontSize: 13, fontFamily: FF.sans, padding: "24px 0" }}>
+                    {libQ && sortedSeries.length > 0 ? "No series match this filter." : "No results."}
+                  </p>
                 )}
               </div>
             </div>
