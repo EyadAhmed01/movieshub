@@ -20,40 +20,6 @@ model User {
   movies         MovieEntry[]
   series         SeriesEntry[]
   watchlistItems WatchlistItem[]
-  recImpressions RecImpression[]
-  recEvents      RecEvent[]
-}
-
-/// One row per title slot shown in For You (for training a personalized ranker).
-model RecImpression {
-  id             String   @id @default(cuid())
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tmdbId         Int
-  mediaType      String
-  rowKind        String
-  position       Int
-  shownAt        DateTime @default(now())
-  /// Numeric feature vector (same order as `scripts/train-ranker.mjs` FEATURE_NAMES).
-  features       Json
-  tmdbBlendScore Float?
-
-  @@index([userId, shownAt])
-  @@index([userId, tmdbId, mediaType])
-}
-
-/// Outcomes after an impression (click, watchlist, strong rating) for labeling training data.
-model RecEvent {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tmdbId    Int
-  mediaType String
-  kind      String
-  createdAt DateTime @default(now())
-
-  @@index([userId, tmdbId, mediaType])
-  @@index([userId, createdAt])
 }
 
 model WatchlistItem {

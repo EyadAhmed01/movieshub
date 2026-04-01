@@ -8,12 +8,8 @@ import {
   tmdbConfigured,
 } from "@/lib/tmdb";
 import { llmConfigured, reorderForYouIndices } from "@/lib/llm";
-import { buildUserSide, buildFeatureVector } from "@/lib/recFeatures";
-import { loadRankerModel, rankerProbability } from "@/lib/recRanker";
 
 export const dynamic = "force-dynamic";
-
-const ENABLE_REC_IMPRESSIONS = process.env.REC_IMPRESSIONS !== "0";
 
 function hashStringToUint32(str) {
   let h = 2166136261;
@@ -166,7 +162,7 @@ export async function GET(request) {
   }
 
   const list = [...scored.values()].map(({ score, item }) => ({ ...item, _score: score }));
-  const stripScore = ({ _score, genreIds: _g, ...rest }) => rest;
+  const stripScore = ({ _score, ...rest }) => rest;
 
   const movieRich = list
     .filter((x) => x.mediaType === "movie" && !recIsExcluded(x))
@@ -175,102 +171,38 @@ export async function GET(request) {
     .filter((x) => x.mediaType === "tv" && !recIsExcluded(x))
     .sort((a, b) => b._score - a._score);
 
-  const userSide = buildUserSide(movies, series);
-  const rankerModel = loadRankerModel();
-
-  async function finalizeStrip(rich, salt, rowKind) {
-    if (rich.length === 0) return { items: [], logRows: [], usedLlm: false };
+  async function finalizeStrip(rich, salt) {
+    if (rich.length === 0) return { items: [], usedLlm: false };
     const pool = seededShuffle(rich.slice(0, Math.min(48, rich.length)), seedUint ^ salt);
     const cap = Math.min(24, pool.length);
-    let basePool = pool.slice(0, cap);
+    const basePool = pool.slice(0, cap);
     const need = Math.min(12, basePool.length);
-    if (need < 1) return { items: [], logRows: [], usedLlm: false };
-
-    if (rankerModel) {
-      const indexed = basePool.map((item, idx) => ({ item, idx }));
-      indexed.sort((A, B) => {
-        const fa = buildFeatureVector(userSide, A.item, {
-          position: A.idx,
-          rowKind,
-          tmdbBlendScore: A.item._score,
-        });
-        const fb = buildFeatureVector(userSide, B.item, {
-          position: B.idx,
-          rowKind,
-          tmdbBlendScore: B.item._score,
-        });
-        const pa = rankerProbability(fa, rankerModel);
-        const pb = rankerProbability(fb, rankerModel);
-        if (pb !== pa) return pb - pa;
-        return B.item._score - A.item._score;
-      });
-      basePool = indexed.map((x) => x.item);
-    }
+    if (need < 1) return { items: [], usedLlm: false };
 
     let usedLlm = false;
-    let finalRaw = basePool.slice(0, need);
-
     if (llmConfigured() && basePool.length >= 12) {
       const lines = basePool.map((x, i) => `${i}. ${x.title} (${x.year ?? "?"})`).join("\n");
       const order = await reorderForYouIndices(basePool.length, lines, 12);
       if (order) {
         usedLlm = true;
-        finalRaw = order.map((i) => basePool[i]).filter(Boolean).slice(0, need);
+        return {
+          items: order.map((i) => stripScore(basePool[i])).filter(Boolean),
+          usedLlm,
+        };
       }
     }
 
-    const logRows = finalRaw.map((item, position) => ({
-      tmdbId: item.tmdbId,
-      mediaType: item.mediaType,
-      rowKind,
-      position,
-      features: buildFeatureVector(userSide, item, {
-        position,
-        rowKind,
-        tmdbBlendScore: item._score,
-      }),
-      tmdbBlendScore: item._score,
-    }));
-
-    const items = finalRaw.map(stripScore);
-    return { items, logRows, usedLlm };
+    return {
+      items: basePool.slice(0, need).map(stripScore),
+      usedLlm: false,
+    };
   }
 
-  const moviePack = await finalizeStrip(movieRich, 0x11111111, "movie");
-  const tvPack = await finalizeStrip(tvRich, 0x22222222, "tv");
-  let movieItems = moviePack.items;
-  let tvItems = tvPack.items;
+  const moviePack = await finalizeStrip(movieRich, 0x11111111);
+  const tvPack = await finalizeStrip(tvRich, 0x22222222);
+  const movieItems = moviePack.items;
+  const tvItems = tvPack.items;
   const usedLlmMix = moviePack.usedLlm || tvPack.usedLlm;
-
-  async function attachImpressionIds(rows, items) {
-    if (!ENABLE_REC_IMPRESSIONS || rows.length === 0) return items;
-    const uid = session.user.id;
-    try {
-      const created = await prisma.$transaction(
-        rows.map((row) =>
-          prisma.recImpression.create({
-            data: {
-              userId: uid,
-              tmdbId: row.tmdbId,
-              mediaType: row.mediaType,
-              rowKind: row.rowKind,
-              position: row.position,
-              features: row.features,
-              tmdbBlendScore: row.tmdbBlendScore,
-            },
-            select: { id: true },
-          })
-        )
-      );
-      return items.map((it, i) => ({ ...it, recImpId: created[i]?.id }));
-    } catch (e) {
-      console.error("rec impressions:", e);
-      return items;
-    }
-  }
-
-  movieItems = await attachImpressionIds(moviePack.logRows, movieItems);
-  tvItems = await attachImpressionIds(tvPack.logRows, tvItems);
 
   const algorithm = {
     name: "TMDB graph blend + fresh refresh",
@@ -283,16 +215,9 @@ export async function GET(request) {
       "Pick rated seeds from a shuffled pool (not always the same top 6 movies / 4 series).",
       `Fetch TMDB similar + recommendations at page ${tmdbPage} (1–5) per seed, without CDN cache, so pages can differ each refresh.`,
       "Weight and merge scores; exclude library, watchlist, and manual title matches.",
-      rankerModel
-        ? "Candidates are reranked with a trained logistic model (data/ranker_weights.json) before optional LLM shuffle; impressions are logged for retraining."
-        : "Shuffle among the top ~48 scored titles, then take up to 12 (optionally reordered by Mr Potato when the LLM is configured). Train a ranker: npm run rec:export && npm run rec:train.",
+      "Shuffle among the top ~48 scored titles, then take up to 12 (optionally reordered by Mr Potato when the LLM is configured).",
     ],
   };
-
-  if (rankerModel) {
-    algorithm.name = "TMDB blend + personalized ranker + refresh";
-    algorithm.mlNote = `${algorithm.mlNote} Personalized logistic ranker active (${rankerModel.nSamples ?? "?"} training rows).`;
-  }
 
   return NextResponse.json({ movieItems, tvItems, algorithm });
 }
