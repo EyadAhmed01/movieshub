@@ -12,11 +12,24 @@ function posterSrc(posterPath) {
   return `${TMDB_IMG}${posterPath}`;
 }
 
+function trackRecClick(recImpId) {
+  if (!recImpId) return;
+  fetch("/api/recommendations/track", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ impressionId: recImpId, kind: "click" }),
+  }).catch(() => {});
+}
+
 function RecCard({ x, onOpen }) {
   return (
     <button
       type="button"
-      onClick={() => onOpen(x)}
+      onClick={() => {
+        trackRecClick(x.recImpId);
+        onOpen(x);
+      }}
       title="View details"
       style={{
         flex: "0 0 auto",

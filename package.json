@@ -9,7 +9,9 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.cjs",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "rec:export": "node scripts/export-rec-training.mjs --out data/rec_training.csv",
+    "rec:train": "node scripts/train-ranker.mjs --in data/rec_training.csv --out data/ranker_weights.json"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.2.0",

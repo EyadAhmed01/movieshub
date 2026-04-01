@@ -174,6 +174,7 @@ export async function fetchMovieSimilarAndRecommended(tmdbId, options = {}) {
       posterPath: x.poster_path,
       overview: (x.overview || "").slice(0, 280),
       voteAverage: typeof x.vote_average === "number" ? x.vote_average : null,
+      genreIds: Array.isArray(x.genre_ids) ? x.genre_ids : [],
     }));
   };
   const [similar, recommended] = await Promise.all([parse(simRes), parse(recRes)]);
@@ -206,6 +207,7 @@ export async function fetchTvSimilarAndRecommended(tmdbId, options = {}) {
       posterPath: x.poster_path,
       overview: (x.overview || "").slice(0, 280),
       voteAverage: typeof x.vote_average === "number" ? x.vote_average : null,
+      genreIds: Array.isArray(x.genre_ids) ? x.genre_ids : [],
     }));
   };
   const [similar, recommended] = await Promise.all([parse(simRes), parse(recRes)]);
