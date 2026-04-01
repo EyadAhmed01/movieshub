@@ -49,7 +49,10 @@ export default function TmdbHints({
   libraryMovies = [],
   librarySeries = [],
   onQuickAdd,
+  /** @deprecated prefer quickAddBusyKey for movie+TV combined search */
   quickAddBusyTmdbId = null,
+  /** e.g. `movie-550` / `tv-1396` when searching both types */
+  quickAddBusyKey = null,
   positionDropdown = "flow",
   /** Higher when anchored in fixed header (dropdown above page content). */
   dropdownZIndex = 40,
@@ -66,7 +69,9 @@ export default function TmdbHints({
     let cancelled = false;
     (async () => {
       try {
-        const data = await apiJson(`/api/tmdb/search?q=${encodeURIComponent(q)}&type=${type}`);
+        const data = await apiJson(
+          `/api/tmdb/search?q=${encodeURIComponent(q)}&type=${encodeURIComponent(type)}`
+        );
         if (cancelled) return;
         setItems(data.results || []);
         setConfigured(data.configured !== false);
@@ -79,12 +84,18 @@ export default function TmdbHints({
     };
   }, [q, type, visible]);
 
+  const isBoth = type === "both" || type === "all";
   const isMovie = type === "movie";
-  const showLibraryMovies = isMovie && Array.isArray(libraryMovies);
-  const showLibrarySeries = !isMovie && Array.isArray(librarySeries);
+  const isTv = type === "tv";
+  const showLibraryMovies = (isMovie || isBoth) && Array.isArray(libraryMovies);
+  const showLibrarySeries = (isTv || isBoth) && Array.isArray(librarySeries);
+  const rowMediaType = (r) => r.mediaType || (isTv ? "tv" : "movie");
+
   const visibleItems = items.filter((r) => {
-    if (showLibraryMovies && findLibraryMovie(libraryMovies, r)) return false;
-    if (showLibrarySeries && findLibrarySeries(librarySeries, r)) return false;
+    const mt = rowMediaType(r);
+    if (mt === "tv") {
+      if (showLibrarySeries && findLibrarySeries(librarySeries, r)) return false;
+    } else if (showLibraryMovies && findLibraryMovie(libraryMovies, r)) return false;
     return true;
   });
 
@@ -107,7 +118,14 @@ export default function TmdbHints({
   }
 
   const showLibrary = showLibraryMovies || showLibrarySeries;
-  const quickAddEnabled = showLibraryMovies && typeof onQuickAdd === "function";
+  const quickAddEnabled = typeof onQuickAdd === "function" && (isBoth || isMovie || isTv);
+
+  function rowBusy(r) {
+    const mt = rowMediaType(r);
+    if (quickAddBusyKey != null) return quickAddBusyKey === `${mt}-${r.tmdbId}`;
+    if (quickAddBusyTmdbId != null) return quickAddBusyTmdbId === r.tmdbId;
+    return false;
+  }
 
   const dropPos =
     positionDropdown === "absolute"
@@ -141,15 +159,15 @@ export default function TmdbHints({
       }}
     >
       {visibleItems.map((r) => {
-        const lib = showLibraryMovies
-          ? findLibraryMovie(libraryMovies, r)
-          : showLibrarySeries
-            ? findLibrarySeries(librarySeries, r)
-            : null;
-        const busy = quickAddBusyTmdbId != null && quickAddBusyTmdbId === r.tmdbId;
+        const mt = rowMediaType(r);
+        const lib =
+          mt === "tv" ? findLibrarySeries(librarySeries, r) : findLibraryMovie(libraryMovies, r);
+        const busy = rowBusy(r);
+        const canQuickAddRow =
+          quickAddEnabled && !lib && (isBoth || mt === "movie" || mt === "tv");
         return (
           <li
-            key={`${r.tmdbId}`}
+            key={`${mt}-${r.tmdbId}`}
             style={{
               borderBottom: "1px solid #1a1a1a",
               display: "flex",
@@ -200,6 +218,21 @@ export default function TmdbHints({
                   wordBreak: "normal",
                 }}
               >
+                {isBoth && (
+                  <span
+                    style={{
+                      display: "inline-block",
+                      marginRight: 8,
+                      fontSize: 8,
+                      letterSpacing: "0.14em",
+                      fontFamily: FF.mono,
+                      color: mt === "tv" ? "#7a9ab8" : "#b8a07a",
+                      verticalAlign: "middle",
+                    }}
+                  >
+                    {mt === "tv" ? "TV" : "FILM"}
+                  </span>
+                )}
                 {r.title}
                 {r.year != null && <span style={{ color: "#8a8580", marginLeft: 8 }}>({r.year})</span>}
                 {typeof r.voteAverage === "number" && (
@@ -254,7 +287,7 @@ export default function TmdbHints({
                     >
                       Not watched
                     </span>
-                    {quickAddEnabled && (
+                    {canQuickAddRow && (
                       <button
                         type="button"
                         disabled={busy}

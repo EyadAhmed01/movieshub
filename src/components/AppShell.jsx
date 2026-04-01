@@ -21,11 +21,12 @@ function AppShellInner({ children }) {
   const { search, setSearch } = useAppUi();
   const [menuOpen, setMenuOpen] = useState(false);
   const [barMovies, setBarMovies] = useState([]);
+  const [barSeries, setBarSeries] = useState([]);
   const [profileCard, setProfileCard] = useState(null);
   const [wtwOpen, setWtwOpen] = useState(false);
   const [badgeModalOpen, setBadgeModalOpen] = useState(false);
   const [searchDetailModal, setSearchDetailModal] = useState(null);
-  const [quickAddBusyTmdbId, setQuickAddBusyTmdbId] = useState(null);
+  const [quickAddBusyKey, setQuickAddBusyKey] = useState(null);
   const [flash, setFlash] = useState(null);
   const [exportBusy, setExportBusy] = useState(false);
   const menuRef = useRef(null);
@@ -35,11 +36,13 @@ function AppShellInner({ children }) {
 
   const loadBarData = useCallback(async () => {
     try {
-      const [m, p] = await Promise.all([
+      const [m, s, p] = await Promise.all([
         apiJson("/api/movies").catch(() => []),
+        apiJson("/api/series").catch(() => []),
         apiJson("/api/profile").catch(() => null),
       ]);
       setBarMovies(Array.isArray(m) ? m : []);
+      setBarSeries(Array.isArray(s) ? s : []);
       setProfileCard(p && !p.error ? p : null);
     } catch {
       setBarMovies([]);
@@ -96,26 +99,39 @@ function AppShellInner({ children }) {
     setTimeout(() => setFlash(null), 2500);
   }, []);
 
-  const quickAddMovieFromSearch = useCallback(
+  const quickAddFromSearchBar = useCallback(
     async (r) => {
-      const y = r.year;
-      if (y == null || !Number.isFinite(y)) {
-        showFlash("No release year from TMDB — use Add Movie on Home to set the year.");
-        return;
-      }
-      setQuickAddBusyTmdbId(r.tmdbId);
+      const mt = r.mediaType === "tv" ? "tv" : "movie";
+      setQuickAddBusyKey(`${mt}-${r.tmdbId}`);
       try {
-        await apiJson("/api/movies", {
-          method: "POST",
-          body: JSON.stringify({ title: r.title, year: y, tmdbId: r.tmdbId }),
-        });
-        showFlash(`"${r.title}" added to Movies`);
+        if (mt === "tv") {
+          await apiJson("/api/series", {
+            method: "POST",
+            body: JSON.stringify({
+              title: r.title,
+              years: r.year != null ? String(r.year) : "2000",
+              tmdbId: r.tmdbId,
+            }),
+          });
+          showFlash(`"${r.title}" added to Series`);
+        } else {
+          const y = r.year;
+          if (y == null || !Number.isFinite(y)) {
+            showFlash("No release year from TMDB — use Add Movie on Home to set the year.");
+            return;
+          }
+          await apiJson("/api/movies", {
+            method: "POST",
+            body: JSON.stringify({ title: r.title, year: y, tmdbId: r.tmdbId }),
+          });
+          showFlash(`"${r.title}" added to Movies`);
+        }
         window.dispatchEvent(new CustomEvent("rp-app-refresh"));
         window.dispatchEvent(new CustomEvent("rp-recommendations-refresh"));
       } catch (e) {
-        showFlash(e instanceof Error ? e.message : "Could not add movie");
+        showFlash(e instanceof Error ? e.message : "Could not add title");
       } finally {
-        setQuickAddBusyTmdbId(null);
+        setQuickAddBusyKey(null);
       }
     },
     [showFlash]
@@ -198,14 +214,14 @@ function AppShellInner({ children }) {
             {isHome ? (
               <div ref={searchWrapRef} className="app-top-bar__search-inner">
                 <input
-                  placeholder="Search library & TMDB…"
+                  placeholder="Search movies, series & TMDB…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onFocus={() => setSearchHintsSuppressed(false)}
                   onKeyDown={(e) => {
                     if (e.key === "Escape") setSearchHintsSuppressed(true);
                   }}
-                  aria-label="Search movies and your library"
+                  aria-label="Search movies, series, and your library"
                   className="app-top-bar__search-input"
                   style={{
                     width: "100%",
@@ -225,13 +241,19 @@ function AppShellInner({ children }) {
                 <TmdbHints
                   id="home-tmdb-hints"
                   query={search}
-                  type="movie"
+                  type="both"
                   onPick={(r) => setSearch(r.title)}
-                  onOpenDetail={(r) => setSearchDetailModal({ tmdbId: r.tmdbId, mediaType: "movie" })}
+                  onOpenDetail={(r) =>
+                    setSearchDetailModal({
+                      tmdbId: r.tmdbId,
+                      mediaType: r.mediaType === "tv" ? "tv" : "movie",
+                    })
+                  }
                   visible={search.trim().length >= 2 && !searchHintsSuppressed}
                   libraryMovies={barMovies}
-                  onQuickAdd={quickAddMovieFromSearch}
-                  quickAddBusyTmdbId={quickAddBusyTmdbId}
+                  librarySeries={barSeries}
+                  onQuickAdd={quickAddFromSearchBar}
+                  quickAddBusyKey={quickAddBusyKey}
                   positionDropdown="absolute"
                   dropdownZIndex={220}
                 />

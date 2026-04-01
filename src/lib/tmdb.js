@@ -46,8 +46,10 @@ export async function searchTmdb(query, type) {
   const res = await fetch(url, { next: { revalidate: 300 } });
   if (!res.ok) throw new Error(`TMDB ${res.status}`);
   const data = await res.json();
+  const mediaType = type === "tv" ? "tv" : "movie";
   const list = (data.results || []).slice(0, 15).map((r) => ({
     tmdbId: r.id,
+    mediaType,
     title: type === "tv" ? r.name : r.title,
     year: (() => {
       const d = type === "tv" ? r.first_air_date : r.release_date;
@@ -58,6 +60,7 @@ export async function searchTmdb(query, type) {
     posterPath: r.poster_path,
     overview: r.overview || "",
     voteAverage: typeof r.vote_average === "number" ? r.vote_average : null,
+    popularity: typeof r.popularity === "number" ? r.popularity : 0,
   }));
   return { results: list, configured: true };
 }
