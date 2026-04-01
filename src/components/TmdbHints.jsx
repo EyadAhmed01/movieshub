@@ -39,6 +39,12 @@ export function findLibrarySeries(series, r) {
   return series.find((s) => s.title.trim().toLowerCase() === t) || null;
 }
 
+export function findWatchlistItem(watchlist, r) {
+  if (!watchlist?.length) return null;
+  const mt = r.mediaType === "tv" ? "tv" : "movie";
+  return watchlist.find((w) => Number(w.tmdbId) === Number(r.tmdbId) && w.mediaType === mt) || null;
+}
+
 export default function TmdbHints({
   id,
   query,
@@ -48,11 +54,15 @@ export default function TmdbHints({
   visible,
   libraryMovies = [],
   librarySeries = [],
+  /** Saved to My List (watchlist), not the watched library */
+  watchlistItems = [],
   onQuickAdd,
   /** @deprecated prefer quickAddBusyKey for movie+TV combined search */
   quickAddBusyTmdbId = null,
   /** e.g. `movie-550` / `tv-1396` when searching both types */
   quickAddBusyKey = null,
+  /** Label for the quick action (header search → My List uses "Watch later") */
+  quickAddLabel = "Watch later",
   positionDropdown = "flow",
   /** Higher when anchored in fixed header (dropdown above page content). */
   dropdownZIndex = 40,
@@ -162,9 +172,10 @@ export default function TmdbHints({
         const mt = rowMediaType(r);
         const lib =
           mt === "tv" ? findLibrarySeries(librarySeries, r) : findLibraryMovie(libraryMovies, r);
+        const onWl = findWatchlistItem(watchlistItems, r);
         const busy = rowBusy(r);
         const canQuickAddRow =
-          quickAddEnabled && !lib && (isBoth || mt === "movie" || mt === "tv");
+          quickAddEnabled && !lib && !onWl && (isBoth || mt === "movie" || mt === "tv");
         return (
           <li
             key={`${mt}-${r.tmdbId}`}
@@ -273,46 +284,45 @@ export default function TmdbHints({
                       {lib.userRating != null ? `${lib.userRating}/10` : "Not rated"}
                     </span>
                   </>
+                ) : onWl ? (
+                  <span
+                    style={{
+                      fontSize: 9,
+                      letterSpacing: "0.12em",
+                      fontFamily: FF.mono,
+                      color: "#8a8478",
+                      textTransform: "uppercase",
+                      fontWeight: 500,
+                    }}
+                  >
+                    On My List
+                  </span>
                 ) : (
-                  <>
-                    <span
+                  canQuickAddRow && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onQuickAdd(r);
+                      }}
                       style={{
-                        fontSize: 9,
-                        letterSpacing: "0.12em",
+                        background: busy ? "#2a2a2a" : "rgba(229, 9, 20, 0.15)",
+                        border: "1px solid #8b1538",
+                        borderRadius: 6,
+                        color: busy ? "#555" : "#f5f0e8",
+                        padding: "6px 10px",
+                        fontSize: 10,
                         fontFamily: FF.mono,
-                        color: "#666",
+                        letterSpacing: "0.06em",
                         textTransform: "uppercase",
-                        fontWeight: 500,
+                        cursor: busy ? "wait" : "pointer",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      Not watched
-                    </span>
-                    {canQuickAddRow && (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onQuickAdd(r);
-                        }}
-                        style={{
-                          background: busy ? "#2a2a2a" : "rgba(229, 9, 20, 0.15)",
-                          border: "1px solid #8b1538",
-                          borderRadius: 6,
-                          color: busy ? "#555" : "#f5f0e8",
-                          padding: "6px 10px",
-                          fontSize: 10,
-                          fontFamily: FF.mono,
-                          letterSpacing: "0.06em",
-                          textTransform: "uppercase",
-                          cursor: busy ? "wait" : "pointer",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {busy ? "…" : "Add to my list"}
-                      </button>
-                    )}
-                  </>
+                      {busy ? "…" : quickAddLabel}
+                    </button>
+                  )
                 )}
               </div>
             )}

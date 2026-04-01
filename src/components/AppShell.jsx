@@ -22,6 +22,7 @@ function AppShellInner({ children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [barMovies, setBarMovies] = useState([]);
   const [barSeries, setBarSeries] = useState([]);
+  const [barWatchlist, setBarWatchlist] = useState([]);
   const [profileCard, setProfileCard] = useState(null);
   const [wtwOpen, setWtwOpen] = useState(false);
   const [badgeModalOpen, setBadgeModalOpen] = useState(false);
@@ -36,16 +37,20 @@ function AppShellInner({ children }) {
 
   const loadBarData = useCallback(async () => {
     try {
-      const [m, s, p] = await Promise.all([
+      const [m, s, w, p] = await Promise.all([
         apiJson("/api/movies").catch(() => []),
         apiJson("/api/series").catch(() => []),
+        apiJson("/api/watchlist").catch(() => []),
         apiJson("/api/profile").catch(() => null),
       ]);
       setBarMovies(Array.isArray(m) ? m : []);
       setBarSeries(Array.isArray(s) ? s : []);
+      setBarWatchlist(Array.isArray(w) ? w : []);
       setProfileCard(p && !p.error ? p : null);
     } catch {
       setBarMovies([]);
+      setBarSeries([]);
+      setBarWatchlist([]);
     }
   }, []);
 
@@ -104,32 +109,16 @@ function AppShellInner({ children }) {
       const mt = r.mediaType === "tv" ? "tv" : "movie";
       setQuickAddBusyKey(`${mt}-${r.tmdbId}`);
       try {
-        if (mt === "tv") {
-          await apiJson("/api/series", {
-            method: "POST",
-            body: JSON.stringify({
-              title: r.title,
-              years: r.year != null ? String(r.year) : "2000",
-              tmdbId: r.tmdbId,
-            }),
-          });
-          showFlash(`"${r.title}" added to Series`);
-        } else {
-          const y = r.year;
-          if (y == null || !Number.isFinite(y)) {
-            showFlash("No release year from TMDB — use Add Movie on Home to set the year.");
-            return;
-          }
-          await apiJson("/api/movies", {
-            method: "POST",
-            body: JSON.stringify({ title: r.title, year: y, tmdbId: r.tmdbId }),
-          });
-          showFlash(`"${r.title}" added to Movies`);
-        }
+        await apiJson("/api/watchlist", {
+          method: "POST",
+          body: JSON.stringify({ tmdbId: r.tmdbId, mediaType: mt }),
+        });
+        showFlash(`"${r.title}" saved to My List`);
         window.dispatchEvent(new CustomEvent("rp-app-refresh"));
+        window.dispatchEvent(new CustomEvent("rp-watchlist-refresh"));
         window.dispatchEvent(new CustomEvent("rp-recommendations-refresh"));
       } catch (e) {
-        showFlash(e instanceof Error ? e.message : "Could not add title");
+        showFlash(e instanceof Error ? e.message : "Could not save to My List");
       } finally {
         setQuickAddBusyKey(null);
       }
@@ -252,6 +241,7 @@ function AppShellInner({ children }) {
                   visible={search.trim().length >= 2 && !searchHintsSuppressed}
                   libraryMovies={barMovies}
                   librarySeries={barSeries}
+                  watchlistItems={barWatchlist}
                   onQuickAdd={quickAddFromSearchBar}
                   quickAddBusyKey={quickAddBusyKey}
                   positionDropdown="absolute"

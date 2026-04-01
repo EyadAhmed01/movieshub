@@ -188,6 +188,7 @@ function AddForm({
           librarySeries={type === "series" ? librarySeries : []}
           onQuickAdd={type === "movie" ? onQuickAddMovie : undefined}
           quickAddBusyTmdbId={quickAddBusyTmdbId}
+          quickAddLabel="Add movie"
         />
         {type === "movie" && tmdbId != null ? (
           <div>

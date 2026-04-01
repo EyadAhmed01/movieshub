@@ -293,7 +293,7 @@ export default function WhatToWatchContent({ onAddedToWatchlist }) {
                   cursor: addBusy ? "wait" : "pointer",
                 }}
               >
-                {addBusy ? "Adding…" : "Add to my list"}
+                {addBusy ? "Adding…" : "Watch later"}
               </button>
             ) : (
               <span style={{ fontSize: 12, color: "#865" }}>No TMDB match — add this title manually from My List search.</span>

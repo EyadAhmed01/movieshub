@@ -79,6 +79,12 @@ export default function WatchlistBrowse() {
   }, [status, loadWatchlist]);
 
   useEffect(() => {
+    const onWl = () => loadWatchlist();
+    window.addEventListener("rp-watchlist-refresh", onWl);
+    return () => window.removeEventListener("rp-watchlist-refresh", onWl);
+  }, [loadWatchlist]);
+
+  useEffect(() => {
     if (status !== "authenticated") return;
     if (debouncedQ.length < 2) {
       setResults([]);
@@ -517,7 +523,7 @@ export default function WatchlistBrowse() {
                             opacity: addBusy ? 0.7 : 1,
                           }}
                         >
-                          {addBusy ? "Adding…" : "Add to watchlist"}
+                          {addBusy ? "Adding…" : "Watch later"}
                         </button>
                       )}
                     </div>
